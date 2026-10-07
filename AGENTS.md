@@ -8,8 +8,9 @@
 
 ## 프로젝트
 - 개요: (planning.md 확정 후 한 줄 요약)
-- 기술 스택: (미정 — `decision` 이슈에서 확정 후 기입)
-- 명령어: 설치 / 실행 / 테스트 / 린트 (미정)
+- 기술 스택: TypeScript, React + Vite, React Router / Supabase 무료 플랜 / npm, ESLint
+- 배포: Vercel 무료 플랜 (GitHub 연동 자동 배포)
+- 명령어: 설치 `npm install` / 실행 `npm run dev` / 빌드 `npm run build` / 린트 `npm run lint`
 
 ## 문서 목차
 공통 문서
