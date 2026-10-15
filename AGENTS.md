@@ -7,7 +7,7 @@
 - "규칙 확인"을 요청받으면 `TECHDAY-OK`라고만 답한다.
 
 ## 프로젝트
-- 개요: (planning.md 확정 후 한 줄 요약)
+- 개요: 사내 직원이 같이 식사·배달할 사람을 모으고 메뉴 취합부터 정산까지 하는 반응형 웹앱
 - 기술 스택: TypeScript, React + Vite, React Router / Supabase 무료 플랜 / npm, ESLint
 - 배포: Vercel 무료 플랜 (GitHub 연동 자동 배포)
 - 명령어: 설치 `npm install` / 실행 `npm run dev` / 빌드 `npm run build` / 린트 `npm run lint`
@@ -97,4 +97,14 @@
 - 이 파일의 규칙을 바꾸면 `README.md`도 같은 PR에서 함께 고친다.
 
 ## 코딩 규칙
-- (기술 스택 확정 후 기입)
+UI 규칙은 `docs/common/design-system.md`, DB 구조는 `docs/common/db-schema.md`를 따른다. 여기서는 그 외 공통 코드 컨벤션만 정한다.
+
+- 언어는 TypeScript. 새 파일은 `.ts` / `.tsx`로 만든다.
+- 폴더는 기능 단위로 나눈다: `src/features/<기능>/` (meal, join, settle, notice). 여러 기능이 공유하는 것은 `src/shared/`에 둔다.
+- Supabase 호출은 각 기능의 `features/<기능>/api.ts`에 모은다. 컴포넌트에서 직접 쿼리하지 않는다.
+- Supabase 클라이언트는 `src/shared/supabase.ts` 한 곳에서 만들어 가져다 쓴다.
+- 서버 데이터는 Supabase 쿼리로 가져오고, 화면 로컬 상태만 `useState`를 쓴다. 전역 상태 라이브러리는 쓰지 않는다.
+- DB 타입은 Supabase가 생성한 타입을 쓰고 손으로 중복 정의하지 않는다.
+- 네이밍: 컴포넌트는 PascalCase, 그 외 파일은 kebab-case, 변수·함수는 camelCase.
+- 비동기와 에러는 `api.ts` 함수 안에서 처리하고, 실패 시 화면에 보일 메시지를 반환한다.
+- 커밋 전 `npm run lint`를 통과시킨다.
