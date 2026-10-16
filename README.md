@@ -13,6 +13,13 @@
 1. `gh auth login` — 이슈는 `gh`로 관리
 2. 쓰는 에이전트에 `규칙 확인` 입력 → `TECHDAY-OK`가 나오면 준비 완료
 3. 에이전트가 따르는 규칙이 궁금하면 `AGENTS.md`
+4. `npm install` → `.env.example`을 `.env.local`로 복사하고 Supabase 값 입력 (값은 팀 채널에서 공유) → `npm run dev`
+
+## DB는 어떻게 바꿔요?
+
+- 공용 Supabase 프로젝트 하나를 모두 같이 씀
+- `db-schema.md` 먼저 수정 → `supabase/migrations/`에 마이그레이션 파일 추가 → 스키마 담당이 `supabase db push` 후 `npm run db:types`로 타입 갱신
+- 대시보드에서 테이블을 직접 바꾸지 않음. 리포와 실제 DB가 어긋나기 때문
 
 ## 지금 어디쯤?
 
