@@ -11,6 +11,7 @@
 - 기술 스택: TypeScript, React + Vite, React Router / Supabase 무료 플랜 / npm, ESLint
 - 배포: Vercel 무료 플랜 (GitHub 연동 자동 배포)
 - 명령어: 설치 `npm install` / 실행 `npm run dev` / 빌드 `npm run build` / 린트 `npm run lint`
+- 환경 변수: `.env.example`을 `.env.local`로 복사해 값을 채운다. `.env.local`은 커밋하지 않는다.
 
 ## 문서 목차
 공통 문서
@@ -47,6 +48,11 @@
 - 테이블과 컬럼은 `docs/common/db-schema.md`에 정의된 것만 사용한다. 필요한 것이 없으면 새로 만들지 말고 스키마 변경이 필요하다고 알린다.
 - 용어는 `docs/common/domain.md`의 용어집을 따른다.
 - UI는 `docs/common/design-system.md`를 따른다.
+
+## Supabase
+- 팀 전체가 공용 Supabase 프로젝트 하나를 쓴다.
+- DB 변경은 `docs/common/db-schema.md`를 먼저 고친 뒤 `supabase/migrations/`에 마이그레이션 파일로 반영한다. 대시보드에서 스키마를 직접 바꾸지 않는다.
+- 원격 DB 반영(`supabase db push`)은 스키마 담당이 한다. 반영 후 `npm run db:types`로 `src/shared/database.types.ts`를 다시 생성해 함께 커밋한다.
 
 ## 문서 작성
 - 요구사항은 `docs/features/_template/requirements.md` 형식을 따른다.
