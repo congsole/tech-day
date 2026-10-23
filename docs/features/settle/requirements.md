@@ -26,9 +26,11 @@
 - 참조: `docs/common/planning.md` §3 상태 흐름, `docs/common/domain.md` status·상태 모델
 
 ### REQ-SETTLE-04 주문중 자동 전환
-- 동작: 주문 예정 시간이 되면 겸상이 자동으로 주문중으로 전환되어 잠기고, 메뉴를 입력하지 않은 참여자는 제외된다.
+- 동작: 주문 예정 시간이 되면 겸상이 자동으로 주문중으로 전환되어 잠기고, 메뉴를 입력하지 않은 참여자는 제외된다(Host는 제외하지 않는다). 제외 후 메뉴 입력자가 0명이면 주문중 대신 취소로 전환된다.
 - 인수 조건:
   - Given 모집중 겸상 / When 주문 예정 시간이 도래 / Then 상태가 주문중이 되고 참여·취소·메뉴 변경이 모두 차단된다
-  - Given 주문중 전환 시점에 메뉴를 하나도 입력하지 않은 참여자 / When 전환 / Then 그 참여자는 제외되고 정산에 포함되지 않는다
+  - Given 주문중 전환 시점에 메뉴를 하나도 입력하지 않은 참여자(Host 아님) / When 전환 / Then 그 참여자는 제외되고 정산에 포함되지 않는다
   - Given 메뉴를 입력한 참여자 / When 주문중 전환 / Then 확정 여부와 무관하게 포함되고 메뉴가 잠긴다
-- 참조: `docs/common/planning.md` §3 주문 예정 시간·주문중 전환, `docs/common/domain.md` status·상태 모델
+  - Given 메뉴가 없는 Host / When 주문중 전환 / Then 제외되지 않고 부담액 0원으로 포함된다
+  - Given 전환 시점에 메뉴 입력자가 한 명도 없는 겸상 / When 전환 / Then 주문중이 아니라 취소로 전환된다
+- 참조: `docs/common/planning.md` §3 주문 예정 시간·주문중 전환·Host 참여, `docs/common/domain.md` status·상태 모델

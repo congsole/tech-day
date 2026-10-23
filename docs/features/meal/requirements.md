@@ -35,12 +35,28 @@
   - Given 각 겸상 / When 목록에 표시 / Then 제목·유형·현재 인원/정원이 보인다
 - 참조: `docs/common/planning.md` §3 목록 화면, `docs/common/domain.md` status
 
-### REQ-MEAL-05 Host 넘기기·겸상 취소
-- 동작: Host가 사유(예: 메뉴 변경)를 적고 Host 역할을 넘긴다. 참여자 한 명이 수락하면 새 Host가 되고 겸상은 유지된다. 주문 예정 시간까지 아무도 수락하지 않거나 전원 거절하면 겸상이 취소된다.
+### REQ-MEAL-05 Host 넘기기
+- 동작: Host가 사유(예: 메뉴 변경)를 적고 Host 역할을 넘긴다. 참여자 한 명이 수락하면 새 Host가 되고 겸상은 유지되며, 수락 시 기존 Host의 참여와 메뉴는 삭제된다. 주문 예정 시간까지 아무도 수락하지 않거나 전원 거절하면 겸상이 취소된다.
 - 인수 조건:
   - Given 모집중 겸상의 Host / When 사유를 적고 Host 넘기기를 요청 / Then 참여자들에게 수락/거절 요청이 표시된다
-  - Given Host 넘기기 요청 / When 참여자 한 명이 수락 / Then 그 참여자가 새 Host가 되고 겸상은 모집중으로 유지된다
+  - Given Host 넘기기 요청 / When 참여자 한 명이 수락 / Then 그 참여자가 새 Host가 되고 겸상은 모집중으로 유지되며 기존 Host의 참여·메뉴는 삭제된다
   - Given Host 넘기기 요청 / When 참여자 전원이 거절 / Then 겸상 상태가 취소가 된다
   - Given Host 넘기기 요청 / When 주문 예정 시간까지 아무도 수락하지 않음 / Then 겸상 상태가 취소가 된다
   - Given 겸상이 취소됨 / When 목록 조회 / Then 모집중 목록에서 제외된다
-- 참조: `docs/common/planning.md` §3 Host 이탈·겸상 취소·주문 예정 시간, `docs/common/domain.md` 상태 모델·Host 넘기기
+- 참조: `docs/common/planning.md` §3 Host 넘기기·주문 예정 시간, `docs/common/domain.md` 상태 모델·Host 넘기기
+
+### REQ-MEAL-06 겸상 취소 (Host)
+- 동작: 모집중일 때 Host가 사유를 적고 겸상을 바로 취소한다. 취소된 겸상은 목록에서 제외된다.
+- 인수 조건:
+  - Given 모집중 겸상의 Host / When 사유를 적고 겸상 취소 / Then 상태가 취소가 된다
+  - Given Host가 아닌 참여자 / When 겸상 취소 시도 / Then 취소되지 않는다
+  - Given 취소된 겸상 / When 목록 조회 / Then 모집중 목록에서 제외된다
+- 참조: `docs/common/planning.md` §3 겸상 취소, `docs/common/domain.md` 상태 모델
+
+### REQ-MEAL-07 주문 예정 시간 수정 (Host)
+- 동작: 모집중일 때 Host가 주문 예정 시간을 현재 이후 시각으로 수정한다. Host 넘기기 대기 중에는 수정할 수 없다.
+- 인수 조건:
+  - Given 모집중 겸상의 Host / When 현재 이후 시각으로 주문 예정 시간을 수정 / Then 변경이 반영되고 자동 전환·넘기기 마감 기준이 그 시각으로 바뀐다
+  - Given 현재보다 과거 시각 / When 수정 시도 / Then 저장되지 않고 안내가 표시된다
+  - Given Host 넘기기 대기 중인 겸상 / When 주문 예정 시간 수정 시도 / Then 수정되지 않는다
+- 참조: `docs/common/planning.md` §3 주문 예정 시간, `docs/common/domain.md` 상태 모델
