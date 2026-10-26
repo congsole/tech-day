@@ -1,4 +1,4 @@
-import { Card, createTheme, rem, type CSSVariablesResolver } from '@mantine/core'
+import { Card, Input, createTheme, rem, type CSSVariablesResolver } from '@mantine/core'
 
 // 값의 근거: docs/common/design-system.md §3
 export const theme = createTheme({
@@ -25,6 +25,19 @@ export const theme = createTheme({
     lg: rem(12), // 카드
   },
   components: {
+    Input: Input.extend({
+      styles: (_, props) => ({
+        // 포커스는 input의 변수로, 오류·성공은 Mantine 상태 스타일로 처리한다.
+        wrapper: {
+          '--input-bd':
+            (!props.variant || props.variant === 'default') &&
+            !(props.error && props.withErrorStyles !== false) &&
+            !(props.success && !props.error && props.withSuccessStyles !== false)
+              ? 'var(--mantine-color-gray-6)'
+              : undefined,
+        },
+      }),
+    }),
     Card: Card.extend({ defaultProps: { radius: 'lg', withBorder: true } }),
   },
 })
@@ -34,6 +47,15 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
   light: {
     '--mantine-color-dimmed': 'var(--mantine-color-gray-7)',
     '--mantine-color-default-border': 'var(--mantine-color-gray-3)',
+    '--mantine-color-disabled': 'var(--mantine-color-gray-1)',
+    '--mantine-color-disabled-color': 'var(--mantine-color-gray-6)',
+    '--mantine-color-error': 'var(--mantine-color-red-9)',
+    '--mantine-color-success': 'var(--mantine-color-green-9)',
+    // light 변형의 기본 배경만 맞추고 hover·focus 동작은 Mantine을 유지한다.
+    '--mantine-color-teal-light': 'var(--mantine-color-teal-0)',
+    '--mantine-color-red-light': 'var(--mantine-color-red-0)',
+    '--mantine-color-orange-light': 'var(--mantine-color-orange-0)',
+    '--mantine-color-green-light': 'var(--mantine-color-green-0)',
   },
   dark: {},
 })
