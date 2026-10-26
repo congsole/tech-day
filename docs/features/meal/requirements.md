@@ -3,9 +3,9 @@
 담당: wgmin0416 (컨텍스트·기획). `docs/common/planning.md` §4 A 슬라이스.
 
 ### REQ-MEAL-01 이메일 OTP 로그인
-- 동작: 사내 이메일로 OTP(매직링크 또는 6자리 코드)를 받아 로그인한다. 비밀번호는 없다.
+- 동작: 사내 이메일로 6자리 인증 코드를 받아 입력해 로그인한다. 매직 링크는 쓰지 않는다. 비밀번호는 없다.
 - 인수 조건:
-  - Given 로그인하지 않은 사용자가 앱에 진입 / When 이메일을 입력하고 코드를 요청 / Then 해당 이메일로 인증 코드(또는 링크)가 발송된다
+  - Given 로그인하지 않은 사용자가 앱에 진입 / When 이메일을 입력하고 코드를 요청 / Then 해당 이메일로 6자리 인증 코드가 발송된다
   - Given 인증 코드를 받은 사용자 / When 올바른 코드를 입력 / Then 로그인되고 세션이 유지된다
   - Given 이미 로그인한 사용자가 재방문 / When 앱에 진입 / Then 다시 인증하지 않고 로그인 상태가 유지된다
 - 참조: `docs/common/planning.md` §3 사용자 식별, `docs/common/domain.md` 용어집 User, `docs/common/db-schema.md` (Supabase Auth 연계)
