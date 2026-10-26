@@ -16,7 +16,7 @@
 
 ## 2. UI 라이브러리와 비용
 
-UI 라이브러리는 Mantine **9.7.3**을 사용한다. 초기에는 `@mantine/core`와 `@mantine/hooks`를 동일한 `9.7.3`으로 고정하고, `package-lock.json`을 공유한다. AI 에이전트는 설치 버전에 맞는 API를 참고한다. 현재 저장소에는 Mantine이 설치되지 않았으며 설치·빌드 호환성은 아직 검증하지 않았다. 최초 UI 구현에서 설치·빌드·린트를 검증하고, 호환성 문제로 버전 변경이 필요하면 이 문서부터 수정한다. [공식 릴리스](https://github.com/mantinedev/mantine/releases/tag/9.7.3)
+UI 라이브러리는 Mantine **9.7.3**을 사용한다. 초기에는 `@mantine/core`와 `@mantine/hooks`를 동일한 `9.7.3`으로 고정하고, `package-lock.json`을 공유한다. AI 에이전트는 설치 버전에 맞는 API를 참고한다. Mantine 설치·빌드·린트 호환성을 검증했다(2026-10-26). Theme 검증 범위와 남은 화면 검증은 `docs/common/theme-test-report.md`에 기록한다. 호환성 문제로 버전 변경이 필요하면 이 문서부터 수정한다. [공식 릴리스](https://github.com/mantinedev/mantine/releases/tag/9.7.3)
 
 공식 Mantine 패키지는 MIT 라이선스로 무료 사용 가능하다. [공식 라이선스 안내](https://mantine.dev/getting-started/) (확인일: 2026-10-18)
 
