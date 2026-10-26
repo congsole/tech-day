@@ -105,7 +105,7 @@ export default function LoginPage() {
                     onComplete={handleVerify}
                     error={error !== null}
                     disabled={loading}
-                    aria-label="인증 코드"
+                    ariaLabel="인증 코드"
                   />
                   {error && (
                     <Text size="sm" c="var(--mantine-color-error)">
