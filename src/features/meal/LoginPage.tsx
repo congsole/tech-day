@@ -108,7 +108,7 @@ export default function LoginPage() {
                     aria-label="인증 코드"
                   />
                   {error && (
-                    <Text size="sm" c="red.9">
+                    <Text size="sm" c="var(--mantine-color-error)">
                       {error}
                     </Text>
                   )}
