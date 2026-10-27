@@ -21,7 +21,8 @@ export async function getNoticeView(mealId: string): Promise<Result<NoticeView>>
     supabase.from('meals').select('host_id').eq('id', mealId).maybeSingle(),
     supabase.from('meal_members').select('user_id').eq('meal_id', mealId).eq('user_id', userId).maybeSingle(),
   ])
-  if (meal.error || member.error) return { error: '공지를 불러오지 못했습니다.' }
+  // 참여 여부를 확인하지 못하면 비참여자로 보고 띠를 숨긴다. 실패 안내는 참여자로 확인된 뒤에만 보인다
+  if (meal.error || member.error) return { data: { isMember: false, isHost: false, notices: [] } }
 
   const isHost = meal.data?.host_id === userId
   const isMember = isHost || member.data !== null
