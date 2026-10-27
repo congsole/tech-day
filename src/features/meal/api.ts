@@ -1,4 +1,5 @@
 import type { AuthError, Session } from '@supabase/supabase-js'
+import type { Database } from '../../shared/database.types'
 import { supabase } from '../../shared/supabase'
 
 // 실패하면 화면에 보일 메시지를 담는다
@@ -59,4 +60,33 @@ export async function saveDisplayName(userId: string, displayName: string): Prom
     .select('id')
   if (error || data.length === 0) return { error: '이름을 저장하지 못했습니다. 다시 시도해 주세요.' }
   return { error: null }
+}
+
+export type RecruitingMeal = {
+  id: string
+  title: string
+  type: Database['public']['Enums']['meal_type']
+  capacity: number
+  memberCount: number
+}
+
+// REQ-MEAL-04: 모집중 겸상 목록. 주문 예정 시간이 지난 겸상은 자동 전환 전이어도 제외한다 (db-schema.md §5 열려 있음).
+export async function getRecruitingMeals(): Promise<ApiResult & { meals: RecruitingMeal[] }> {
+  const { data, error } = await supabase
+    .from('meals')
+    .select('id, title, type, capacity, meal_members(count)')
+    .eq('status', 'recruiting')
+    .gt('order_time', new Date().toISOString())
+    .order('created_at', { ascending: false })
+  if (error) return { error: '겸상 목록을 불러오지 못했습니다. 새로 고침해 주세요.', meals: [] }
+  return {
+    error: null,
+    meals: data.map((meal) => ({
+      id: meal.id,
+      title: meal.title,
+      type: meal.type,
+      capacity: meal.capacity,
+      memberCount: meal.meal_members[0]?.count ?? 0,
+    })),
+  }
 }
