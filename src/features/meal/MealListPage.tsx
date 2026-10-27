@@ -1,13 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Badge, Card, Center, Group, Loader, Stack, Text, Title } from '@mantine/core'
+import { Badge, Button, Card, Center, Group, Loader, Stack, Text, Title } from '@mantine/core'
 import { Link } from 'react-router'
 import { getRecruitingMeals, type RecruitingMeal } from './api'
-
-// 유형 표시 이름. docs/common/domain.md 용어집 유형
-const MEAL_TYPE_LABEL: Record<RecruitingMeal['type'], string> = {
-  dine: '식사',
-  delivery: '배달',
-}
+import { MEAL_TYPE_LABEL } from './labels'
 
 // REQ-MEAL-04 모집중 겸상 목록
 export default function MealListPage() {
@@ -26,7 +21,12 @@ export default function MealListPage() {
 
   return (
     <Stack>
-      <Title order={1}>모집중인 겸상</Title>
+      <Group justify="space-between">
+        <Title order={1}>모집중인 겸상</Title>
+        <Button component={Link} to="/meals/new" size="md">
+          겸상 열기
+        </Button>
+      </Group>
       {result === null ? (
         <Center py="xl">
           <Loader aria-label="겸상 목록 불러오는 중" />
