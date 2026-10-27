@@ -40,3 +40,23 @@ export function watchSession(onChange: (session: Session | null) => void): () =>
   const { data } = supabase.auth.onAuthStateChange((_event, session) => onChange(session))
   return () => data.subscription.unsubscribe()
 }
+
+// REQ-MEAL-02: 본인 표시 이름 조회. null이면 이름 설정 전이다.
+export async function getMyDisplayName(
+  userId: string,
+): Promise<ApiResult & { displayName: string | null }> {
+  const { data, error } = await supabase.from('profiles').select('display_name').eq('id', userId).maybeSingle()
+  if (error || !data) return { error: '사용자 정보를 불러오지 못했습니다. 새로 고침해 주세요.', displayName: null }
+  return { error: null, displayName: data.display_name }
+}
+
+// REQ-MEAL-02: 본인 표시 이름(본명) 저장
+export async function saveDisplayName(userId: string, displayName: string): Promise<ApiResult> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ display_name: displayName })
+    .eq('id', userId)
+    .select('id')
+  if (error || data.length === 0) return { error: '이름을 저장하지 못했습니다. 다시 시도해 주세요.' }
+  return { error: null }
+}
