@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState, type FormEvent } from 'react'
 import { useParams } from 'react-router'
 import { useMediaQuery } from '@mantine/hooks'
-import { Alert, Badge, Button, Card, Divider, Drawer, Group, Loader, Stack, Text, Textarea } from '@mantine/core'
+import { Alert, Badge, Button, Card, Divider, Drawer, Group, Stack, Text, Textarea } from '@mantine/core'
 import { createNotice, getNoticeView, type NoticeView } from './api'
 
 const timeFormat = new Intl.DateTimeFormat('ko-KR', {
@@ -71,15 +71,8 @@ export default function NoticeSection() {
       </Alert>
     )
   }
-  if (!view) {
-    return (
-      <Card mih={44}>
-        <Loader size="sm" aria-label="공지를 불러오는 중" />
-      </Card>
-    )
-  }
-  // 참여자가 아니면 공지 띠와 패널을 보여주지 않는다
-  if (!view.isMember) return null
+  // 불러오는 중에는 참여 여부를 모르므로 띠를 보여주지 않는다. 참여자가 아니면 띠와 패널을 보여주지 않는다
+  if (!view || !view.isMember) return null
 
   const latest = view.notices[0]
 
