@@ -127,9 +127,11 @@ export async function createMeal(meal: NewMeal): Promise<ApiResult & { mealId: s
 
 export type MealDetail = {
   id: string
+  hostId: string
   title: string
   type: MealType
   status: MealStatus
+  cancelReason: string | null
   restaurantName: string | null
   menuUrl: string | null
   orderTime: string
@@ -142,7 +144,9 @@ export type MealDetail = {
 export async function getMealDetail(mealId: string): Promise<ApiResult & { meal: MealDetail | null }> {
   const { data, error } = await supabase
     .from('meals')
-    .select('id, title, type, status, restaurant_name, menu_url, order_time, capacity, memo, meal_members(count)')
+    .select(
+      'id, host_id, title, type, status, cancel_reason, restaurant_name, menu_url, order_time, capacity, memo, meal_members(count)',
+    )
     .eq('id', mealId)
     .maybeSingle()
   if (error) return { error: '겸상 정보를 불러오지 못했습니다. 새로 고침해 주세요.', meal: null }
@@ -151,9 +155,11 @@ export async function getMealDetail(mealId: string): Promise<ApiResult & { meal:
     error: null,
     meal: {
       id: data.id,
+      hostId: data.host_id,
       title: data.title,
       type: data.type,
       status: data.status,
+      cancelReason: data.cancel_reason,
       restaurantName: data.restaurant_name,
       menuUrl: data.menu_url,
       orderTime: data.order_time,
@@ -161,5 +167,19 @@ export async function getMealDetail(mealId: string): Promise<ApiResult & { meal:
       memo: data.memo,
       memberCount: data.meal_members[0]?.count ?? 0,
     },
+  }
+}
+
+// REQ-MEAL-06: Host의 겸상 취소. Host·열려 있음 확인은 cancel_meal RPC가 한다.
+export async function cancelMeal(mealId: string, reason: string): Promise<ApiResult> {
+  const { error } = await supabase.rpc('cancel_meal', { p_meal_id: mealId, p_reason: reason })
+  if (!error) return { error: null }
+  switch (error.message) {
+    case 'meal_not_recruiting':
+      return { error: '모집중일 때만 겸상을 취소할 수 있습니다.' }
+    case 'not_host':
+      return { error: 'Host만 겸상을 취소할 수 있습니다.' }
+    default:
+      return { error: '겸상을 취소하지 못했습니다. 다시 시도해 주세요.' }
   }
 }
