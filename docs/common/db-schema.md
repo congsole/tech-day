@@ -69,9 +69,9 @@ profiles(Host) 1─* meals 1─* meal_members *─1 profiles
 | `host_id` | uuid | not null, FK `profiles(id)`, default `auth.uid()` | 현재 Host. Host 넘기기 수락 시 바뀜 |
 | `title` | text | not null, 공백만으로 불가 | 제목 |
 | `type` | `meal_type` | not null | 유형 |
-| `restaurant_name` | text | null 허용 | 식당/가게명 |
+| `restaurant_name` | text | not null, 공백만으로 불가 | 식당/가게명 |
 | `menu_url` | text | null 허용 | 가게 메뉴판 링크 (외부 링크만 저장) |
-| `place` | text | null 허용 | 집합/수령 장소 |
+| `place` | text | not null, 공백만으로 불가 | 집합/수령 장소. Host 수정 시에도 비울 수 없음 |
 | `order_time` | timestamptz | not null | 주문 예정 시간. 이 시각에 `ordering`으로 자동 전환되고, Host 넘기기 수락 마감 기준이 된다 |
 | `capacity` | integer | not null, `>= 1` | 정원 |
 | `memo` | text | null 허용 | 메모 |
@@ -79,7 +79,7 @@ profiles(Host) 1─* meals 1─* meal_members *─1 profiles
 | `cancel_reason` | text | null 허용, 값이 있으면 공백만으로 불가 | Host가 겸상을 취소한 사유. Host 즉시 취소일 때만 값이 있음 |
 | `created_at` | timestamptz | not null, default `now()` | |
 
-- 필수값은 REQ-MEAL-03의 제목·유형·주문 예정 시간·정원을 따른다.
+- 필수값은 제목·유형·식당/가게명·집합/수령 장소·주문 예정 시간·정원이다(`docs/common/planning.md` §3 겸상 열기 입력).
 - 겸상을 열면 트리거(`add_host_as_member`)가 Host를 `meal_members`에 넣는다. Host도 정원에 포함된다.
 - 겸상 취소(`cancel_meal`)와 주문 예정 시간 수정(`update_order_time`)은 RPC로만 한다.
 - 인덱스: `(status, created_at desc)` — 모집중 목록 조회용, `(status, order_time)` — 자동 전환 대상 조회용
@@ -241,5 +241,6 @@ profiles(Host) 1─* meals 1─* meal_members *─1 profiles
 ## 9. 조회 예시
 
 - 모집중 목록과 현재 인원: `meals`를 `status = 'recruiting'`, `order_time > now()`로 거르고 `meal_members(count)`를 함께 조회
+- 내 겸상: `meal_members`를 `user_id = auth.uid()`로 거르고(`(user_id)` 인덱스) `meals`를 함께 조회. `settling`·`canceled`는 `order_time >= now() - interval '7 days'`인 것만. Host도 참여 행이 있으므로 같은 조회로 포함된다. 스키마 변경 없음
 - 참여자별 부담액: `meal_members`와 `profiles(display_name)`, `order_items(price)`를 함께 조회해 `api.ts`에서 합산
 - 공지: `notices`를 `meal_id`로 거르고 `created_at` 내림차순
