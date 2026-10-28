@@ -5,6 +5,7 @@ import type { AuthContext } from '../../shared/RequireAuth'
 import { getMealDetail, type MealDetail } from './api'
 import { MEAL_STATUS_LABEL, MEAL_TYPE_LABEL } from './labels'
 import MealCancelModal from './MealCancelModal'
+import MealOrderTimeModal from './MealOrderTimeModal'
 
 const orderTimeFormat = new Intl.DateTimeFormat('ko-KR', {
   month: 'long',
@@ -29,6 +30,7 @@ export default function MealInfoSection() {
   // 값이 바뀌면 겸상 정보를 다시 불러온다
   const [reloadKey, setReloadKey] = useState(0)
   const [cancelOpened, setCancelOpened] = useState(false)
+  const [orderTimeOpened, setOrderTimeOpened] = useState(false)
   // 상세를 보는 중 지나간 주문 예정 시간. 이 값과 같으면 겸상이 닫힌 것으로 본다
   const [passedOrderTime, setPassedOrderTime] = useState<string | null>(null)
   const orderTime = result?.meal?.orderTime
@@ -110,6 +112,9 @@ export default function MealInfoSection() {
       </Card>
       {canManage && (
         <Group>
+          <Button variant="default" size="md" onClick={() => setOrderTimeOpened(true)}>
+            주문 예정 시간 수정
+          </Button>
           <Button variant="outline" color="red" size="md" onClick={() => setCancelOpened(true)}>
             겸상 취소
           </Button>
@@ -118,6 +123,19 @@ export default function MealInfoSection() {
       {/* 열린 대화상자는 겸상이 닫혀도 입력을 유지하도록 Host에게는 계속 렌더링한다 */}
       {isHost && (
         <>
+          <MealOrderTimeModal
+            // 다시 불러온 시각으로 입력 초기값을 맞춘다
+            key={meal.orderTime}
+            mealId={meal.id}
+            orderTime={meal.orderTime}
+            opened={orderTimeOpened}
+            closed={!isOpen}
+            onClose={() => setOrderTimeOpened(false)}
+            onUpdated={() => {
+              setOrderTimeOpened(false)
+              setReloadKey((key) => key + 1)
+            }}
+          />
           <MealCancelModal
             mealId={meal.id}
             opened={cancelOpened}

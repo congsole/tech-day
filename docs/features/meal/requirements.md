@@ -60,4 +60,4 @@
   - Given 모집중 겸상의 Host / When 현재 이후 시각으로 주문 예정 시간을 수정 / Then 변경이 반영되고 자동 전환·넘기기 마감 기준이 그 시각으로 바뀐다
   - Given 현재보다 과거 시각 / When 수정 시도 / Then 저장되지 않고 안내가 표시된다
   - Given Host 넘기기 대기 중인 겸상 / When 주문 예정 시간 수정 시도 / Then 수정되지 않는다
-- 참조: `docs/common/planning.md` §3 주문 예정 시간, `docs/common/domain.md` 상태 모델
+- 참조: `docs/common/planning.md` §3 주문 예정 시간, `docs/common/domain.md` 상태 모델, `docs/common/db-schema.md` §6 `update_order_time`
