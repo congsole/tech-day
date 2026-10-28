@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router'
 import { createMeal, type MealType } from './api'
 import { MEAL_TYPE_LABEL } from './labels'
 
-type Field = 'title' | 'type' | 'menuUrl' | 'orderTime' | 'capacity'
+type Field = 'title' | 'type' | 'restaurantName' | 'menuUrl' | 'place' | 'orderTime' | 'capacity'
 type Errors = Partial<Record<Field, string>>
 
 function optional(value: string): string | null {
@@ -43,6 +43,8 @@ export default function MealCreatePage() {
     const next: Errors = {}
     if (!title.trim()) next.title = '제목을 입력해 주세요.'
     if (!type) next.type = '유형을 선택해 주세요.'
+    if (!restaurantName.trim()) next.restaurantName = '식당/가게명을 입력해 주세요.'
+    if (!place.trim()) next.place = '집합/수령 장소를 입력해 주세요.'
     const url = menuUrl.trim()
     if (url && !isHttpUrl(url)) next.menuUrl = 'http:// 또는 https://로 시작하는 주소를 입력해 주세요.'
     if (!orderTime) next.orderTime = '주문 예정 시간을 입력해 주세요.'
@@ -63,9 +65,9 @@ export default function MealCreatePage() {
     const result = await createMeal({
       title: title.trim(),
       type,
-      restaurantName: optional(restaurantName),
+      restaurantName: restaurantName.trim(),
       menuUrl: optional(menuUrl),
-      place: optional(place),
+      place: place.trim(),
       orderTime: new Date(orderTime),
       capacity: Number(capacity),
       memo: optional(memo),
@@ -107,10 +109,12 @@ export default function MealCreatePage() {
               </Group>
             </Radio.Group>
             <TextInput
-              label="식당/가게명 (선택)"
+              label="식당/가게명"
+              withAsterisk
               size="md"
               value={restaurantName}
               onChange={(e) => setRestaurantName(e.currentTarget.value)}
+              error={errors.restaurantName}
               disabled={loading}
             />
             <TextInput
@@ -124,10 +128,12 @@ export default function MealCreatePage() {
               disabled={loading}
             />
             <TextInput
-              label="집합/수령 장소 (선택)"
+              label="집합/수령 장소"
+              withAsterisk
               size="md"
               value={place}
               onChange={(e) => setPlace(e.currentTarget.value)}
+              error={errors.place}
               disabled={loading}
             />
             <TextInput
