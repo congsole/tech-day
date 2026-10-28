@@ -124,3 +124,38 @@ export async function createMeal(meal: NewMeal): Promise<ApiResult & { mealId: s
   if (error) return { error: '겸상을 열지 못했습니다. 입력값을 확인하고 다시 시도해 주세요.', mealId: null }
   return { error: null, mealId: data.id }
 }
+
+// REQ-MEAL-06: Host의 겸상 취소. Host·열려 있음 확인은 cancel_meal RPC가 한다.
+export async function cancelMeal(mealId: string, reason: string): Promise<ApiResult> {
+  const { error } = await supabase.rpc('cancel_meal', { p_meal_id: mealId, p_reason: reason })
+  if (!error) return { error: null }
+  switch (error.message) {
+    case 'meal_not_recruiting':
+      return { error: '모집중일 때만 겸상을 취소할 수 있습니다.' }
+    case 'not_host':
+      return { error: 'Host만 겸상을 취소할 수 있습니다.' }
+    default:
+      return { error: '겸상을 취소하지 못했습니다. 다시 시도해 주세요.' }
+  }
+}
+
+// REQ-MEAL-07: Host의 주문 예정 시간 수정. Host·열려 있음·넘기기 대기·현재 이후 확인은 update_order_time RPC가 한다.
+export async function updateOrderTime(mealId: string, orderTime: Date): Promise<ApiResult> {
+  const { error } = await supabase.rpc('update_order_time', {
+    p_meal_id: mealId,
+    p_order_time: orderTime.toISOString(),
+  })
+  if (!error) return { error: null }
+  switch (error.message) {
+    case 'handover_pending':
+      return { error: 'Host 넘기기 대기 중에는 주문 예정 시간을 수정할 수 없습니다.' }
+    case 'meal_not_recruiting':
+      return { error: '모집중일 때만 주문 예정 시간을 수정할 수 있습니다.' }
+    case 'invalid_order_time':
+      return { error: '현재 이후 시각을 입력해 주세요.' }
+    case 'not_host':
+      return { error: 'Host만 주문 예정 시간을 수정할 수 있습니다.' }
+    default:
+      return { error: '주문 예정 시간을 수정하지 못했습니다. 다시 시도해 주세요.' }
+  }
+}

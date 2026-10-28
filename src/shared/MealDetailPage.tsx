@@ -52,7 +52,7 @@ function MealDetailContent({ mealId, userId }: { mealId: string; userId: string 
   return (
     <Stack>
       <NoticeSection meal={meal} />
-      <MealInfoSection meal={meal} />
+      <MealInfoSection meal={meal} onChanged={reload} />
       <JoinSection meal={meal} onChanged={reload} />
       <SettleSection />
     </Stack>
