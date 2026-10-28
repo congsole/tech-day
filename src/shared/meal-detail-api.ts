@@ -20,6 +20,8 @@ export type MealDetail = {
   memberCount: number
   isMember: boolean
   isHost: boolean
+  // 내 주문 확정 시각. 확정 전이거나 참여자가 아니면 null
+  myConfirmedAt: string | null
 }
 
 export type MealDetailResult = { meal: MealDetail; error: null } | { meal: null; error: string }
@@ -35,7 +37,7 @@ export async function getMealDetail(mealId: string, userId: string): Promise<Mea
         .select('id, host_id, title, type, status, cancel_reason, restaurant_name, menu_url, order_time, capacity, memo, meal_members(count)')
         .eq('id', mealId)
         .maybeSingle(),
-      supabase.from('meal_members').select('user_id').eq('meal_id', mealId).eq('user_id', userId).maybeSingle(),
+      supabase.from('meal_members').select('user_id, confirmed_at').eq('meal_id', mealId).eq('user_id', userId).maybeSingle(),
     ])
     if (meal.error || member.error) return { meal: null, error: loadError }
     if (!meal.data) return { meal: null, error: '겸상을 찾을 수 없습니다.' }
@@ -59,6 +61,7 @@ export async function getMealDetail(mealId: string, userId: string): Promise<Mea
         memberCount,
         isMember: isHost || member.data !== null,
         isHost,
+        myConfirmedAt: member.data?.confirmed_at ?? null,
       },
       error: null,
     }
