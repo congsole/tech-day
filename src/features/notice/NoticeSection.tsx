@@ -1,8 +1,8 @@
 import { Fragment, useEffect, useState, type FormEvent } from 'react'
-import { useParams } from 'react-router'
 import { useMediaQuery } from '@mantine/hooks'
 import { Alert, Badge, Button, Card, Divider, Drawer, Group, Stack, Text, Textarea } from '@mantine/core'
-import { createNotice, getNoticeView, type NoticeView } from './api'
+import type { MealDetail } from '../../shared/meal-detail-api'
+import { createNotice, getNotices, type Notice } from './api'
 
 const timeFormat = new Intl.DateTimeFormat('ko-KR', {
   month: 'long',
@@ -14,12 +14,13 @@ const timeFormat = new Intl.DateTimeFormat('ko-KR', {
 const emptyText = '아직 올라온 공지가 없습니다'
 
 // 겸상 상세의 notice 섹션. 공지와 집합/수령 장소(REQ-NOTICE-01~02)
-// 겸상 ID는 useParams()의 mealId로 읽는다.
+// 참여 여부·Host 여부는 겸상 상세가 내려준다(#75). 공지 목록만 이 섹션에서 조회한다.
 // 화면 배치: docs/features/notice/screen.md SCR-NOTICE-01 공지 띠, SCR-NOTICE-02 공지 패널
-export default function NoticeSection() {
-  const { mealId = '' } = useParams()
+export default function NoticeSection({ meal }: { meal: MealDetail }) {
+  const { id: mealId, isMember, isHost } = meal
   const wide = useMediaQuery('(min-width: 48em)')
-  const [view, setView] = useState<NoticeView | null>(null)
+  // null: 불러오는 중
+  const [notices, setNotices] = useState<Notice[] | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [panelOpened, setPanelOpened] = useState(false)
   const [writing, setWriting] = useState(false)
@@ -27,17 +28,19 @@ export default function NoticeSection() {
   const [inputError, setInputError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
+  // 참여 직후에도 띠가 보이도록 참여 여부가 바뀌면 다시 조회한다
   useEffect(() => {
+    if (!isMember) return
     let ignore = false
-    getNoticeView(mealId).then((result) => {
+    getNotices(mealId).then((result) => {
       if (ignore) return
-      setView(result.data ?? null)
+      setNotices(result.data ?? null)
       setLoadError(result.error ?? null)
     })
     return () => {
       ignore = true
     }
-  }, [mealId])
+  }, [mealId, isMember])
 
   function closeForm() {
     setWriting(false)
@@ -57,13 +60,15 @@ export default function NoticeSection() {
       setInputError(created.error)
     } else {
       closeForm()
-      const reloaded = await getNoticeView(mealId)
-      setView(reloaded.data ?? null)
+      const reloaded = await getNotices(mealId)
+      setNotices(reloaded.data ?? null)
       setLoadError(reloaded.error ?? null)
     }
     setSubmitting(false)
   }
 
+  // 참여자가 아니면 띠와 패널을 보여주지 않는다
+  if (!isMember) return null
   if (loadError) {
     return (
       <Alert color="red" title="공지">
@@ -71,10 +76,9 @@ export default function NoticeSection() {
       </Alert>
     )
   }
-  // 불러오는 중에는 참여 여부를 모르므로 띠를 보여주지 않는다. 참여자가 아니면 띠와 패널을 보여주지 않는다
-  if (!view || !view.isMember) return null
+  if (!notices) return null
 
-  const latest = view.notices[0]
+  const latest = notices[0]
 
   return (
     <>
@@ -91,7 +95,7 @@ export default function NoticeSection() {
           <Text fw={700}>공지</Text>
           {latest && (
             <Badge variant="light" color="gray">
-              {view.notices.length}
+              {notices.length}
             </Badge>
           )}
           <Text truncate c={latest ? undefined : 'dimmed'} style={{ flex: 1, minWidth: 0 }}>
@@ -118,12 +122,12 @@ export default function NoticeSection() {
               </Drawer.Title>
               {latest && (
                 <Badge variant="light" color="gray">
-                  {view.notices.length}
+                  {notices.length}
                 </Badge>
               )}
             </Group>
             <Group gap="xs">
-              {view.isHost && !writing && (
+              {isHost && !writing && (
                 <Button variant="light" onClick={() => setWriting(true)}>
                   공지 쓰기
                 </Button>
@@ -161,13 +165,13 @@ export default function NoticeSection() {
                 </form>
               )}
 
-              {view.notices.length === 0 ? (
+              {notices.length === 0 ? (
                 <Text c="dimmed" ta="center" py="lg">
                   {emptyText}.
                 </Text>
               ) : (
                 <Stack gap={0}>
-                  {view.notices.map((notice, index) => (
+                  {notices.map((notice, index) => (
                     <Fragment key={notice.id}>
                       {index > 0 && <Divider />}
                       <Stack gap={4} py="sm">
