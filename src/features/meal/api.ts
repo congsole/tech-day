@@ -125,41 +125,37 @@ export async function createMeal(meal: NewMeal): Promise<ApiResult & { mealId: s
   return { error: null, mealId: data.id }
 }
 
-export type MealDetail = {
-  id: string
-  title: string
-  type: MealType
-  status: MealStatus
-  restaurantName: string | null
-  menuUrl: string | null
-  orderTime: string
-  capacity: number
-  memo: string | null
-  memberCount: number
+// REQ-MEAL-06: Host의 겸상 취소. Host·열려 있음 확인은 cancel_meal RPC가 한다.
+export async function cancelMeal(mealId: string, reason: string): Promise<ApiResult> {
+  const { error } = await supabase.rpc('cancel_meal', { p_meal_id: mealId, p_reason: reason })
+  if (!error) return { error: null }
+  switch (error.message) {
+    case 'meal_not_recruiting':
+      return { error: '모집중일 때만 겸상을 취소할 수 있습니다.' }
+    case 'not_host':
+      return { error: 'Host만 겸상을 취소할 수 있습니다.' }
+    default:
+      return { error: '겸상을 취소하지 못했습니다. 다시 시도해 주세요.' }
+  }
 }
 
-// REQ-MEAL-03: 겸상 상세의 겸상 정보
-export async function getMealDetail(mealId: string): Promise<ApiResult & { meal: MealDetail | null }> {
-  const { data, error } = await supabase
-    .from('meals')
-    .select('id, title, type, status, restaurant_name, menu_url, order_time, capacity, memo, meal_members(count)')
-    .eq('id', mealId)
-    .maybeSingle()
-  if (error) return { error: '겸상 정보를 불러오지 못했습니다. 새로 고침해 주세요.', meal: null }
-  if (!data) return { error: '겸상을 찾을 수 없습니다.', meal: null }
-  return {
-    error: null,
-    meal: {
-      id: data.id,
-      title: data.title,
-      type: data.type,
-      status: data.status,
-      restaurantName: data.restaurant_name,
-      menuUrl: data.menu_url,
-      orderTime: data.order_time,
-      capacity: data.capacity,
-      memo: data.memo,
-      memberCount: data.meal_members[0]?.count ?? 0,
-    },
+// REQ-MEAL-07: Host의 주문 예정 시간 수정. Host·열려 있음·넘기기 대기·현재 이후 확인은 update_order_time RPC가 한다.
+export async function updateOrderTime(mealId: string, orderTime: Date): Promise<ApiResult> {
+  const { error } = await supabase.rpc('update_order_time', {
+    p_meal_id: mealId,
+    p_order_time: orderTime.toISOString(),
+  })
+  if (!error) return { error: null }
+  switch (error.message) {
+    case 'handover_pending':
+      return { error: 'Host 넘기기 대기 중에는 주문 예정 시간을 수정할 수 없습니다.' }
+    case 'meal_not_recruiting':
+      return { error: '모집중일 때만 주문 예정 시간을 수정할 수 있습니다.' }
+    case 'invalid_order_time':
+      return { error: '현재 이후 시각을 입력해 주세요.' }
+    case 'not_host':
+      return { error: 'Host만 주문 예정 시간을 수정할 수 있습니다.' }
+    default:
+      return { error: '주문 예정 시간을 수정하지 못했습니다. 다시 시도해 주세요.' }
   }
 }
