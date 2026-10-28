@@ -50,7 +50,8 @@
   - Given 모집중 겸상의 Host / When 사유를 적고 겸상 취소 / Then 상태가 취소가 된다
   - Given Host가 아닌 참여자 / When 겸상 취소 시도 / Then 취소되지 않는다
   - Given 취소된 겸상 / When 목록 조회 / Then 모집중 목록에서 제외된다
-- 참조: `docs/common/planning.md` §3 겸상 취소, `docs/common/domain.md` 상태 모델
+  - Given 모집중 겸상의 Host / When 사유를 비우거나 공백만 적고 겸상 취소 / Then 취소되지 않고 사유 입력에 안내가 표시된다
+- 참조: `docs/common/planning.md` §3 겸상 취소, `docs/common/domain.md` 상태 모델, `docs/common/db-schema.md` `meals.cancel_reason`·§6 `cancel_meal`
 
 ### REQ-MEAL-07 주문 예정 시간 수정 (Host)
 - 동작: 모집중일 때 Host가 주문 예정 시간을 현재 이후 시각으로 수정한다. Host 넘기기 대기 중에는 수정할 수 없다.
@@ -58,7 +59,7 @@
   - Given 모집중 겸상의 Host / When 현재 이후 시각으로 주문 예정 시간을 수정 / Then 변경이 반영되고 자동 전환·넘기기 마감 기준이 그 시각으로 바뀐다
   - Given 현재보다 과거 시각 / When 수정 시도 / Then 저장되지 않고 안내가 표시된다
   - Given Host 넘기기 대기 중인 겸상 / When 주문 예정 시간 수정 시도 / Then 수정되지 않는다
-- 참조: `docs/common/planning.md` §3 주문 예정 시간, `docs/common/domain.md` 상태 모델
+- 참조: `docs/common/planning.md` §3 주문 예정 시간, `docs/common/domain.md` 상태 모델, `docs/common/db-schema.md` §6 `update_order_time`
 
 ### REQ-MEAL-08 Host 넘기기 수락
 - 동작: Host 넘기기 대기 중인 겸상의 참여자 한 명이 수락하면 새 Host가 된다. 겸상은 모집중으로 유지되고, 기존 Host의 참여와 메뉴는 삭제된다. REQ-MEAL-05에서 나눔.
