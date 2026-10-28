@@ -19,4 +19,5 @@
   - Given 장소가 있는 겸상 / When 겸상 상세를 봄 / Then 유형이 식사면 집합 장소, 배달이면 수령 장소라는 이름으로 장소가 보인다
   - Given Host가 아닌 사용자 / When 장소 수정을 요청 / Then 수정되지 않는다
   - Given 모집중이 아닌 겸상 / When Host가 장소 수정을 요청 / Then 수정되지 않고 안내가 표시된다
+  - Given 모집중 겸상의 Host / When 장소를 비우거나 공백만 입력해 저장 / Then 저장되지 않고 안내가 표시된다
 - 참조: `docs/common/planning.md` §3 집합/수령 장소, `docs/common/domain.md` 집합/수령 장소(place), `docs/common/db-schema.md` `meals.place`·§5 권한
