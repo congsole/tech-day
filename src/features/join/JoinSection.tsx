@@ -3,6 +3,7 @@ import { Alert, Button, Card, Group, Loader, Stack, Text, Title } from '@mantine
 import { useOutletContext, useParams } from 'react-router'
 import type { AuthContext } from '../../shared/RequireAuth'
 import { getParticipation, joinMeal } from './api'
+import MyMenuSection from './MyMenuSection'
 
 // REQ-JOIN-01 / SCR-JOIN-01. 섹션 간 공유 데이터 갱신은 #75 통합 범위.
 export default function JoinSection() {
@@ -68,34 +69,44 @@ function ParticipationSection({ mealId, userId }: { mealId: string; userId: stri
     inFlight.current = false
   }
 
+  async function refreshParticipation() {
+    const refreshed = await getParticipation(mealId, userId)
+    setResult(refreshed)
+    setNow(Date.now())
+    return refreshed.data
+  }
+
   return (
-    <Card p="lg" bg="white">
-      <Stack gap="sm">
-        <Title order={2}>참여 상태</Title>
-        {!result ? (
-          <Group role="status">
-            <Loader size="sm" aria-hidden />
-            <Text>참여 상태를 불러오는 중입니다</Text>
-          </Group>
-        ) : result.error ? (
-          <Alert color="red" role="alert">{result.error}</Alert>
-        ) : view && (
-          <>
-            <Text>인원 {view.memberCount}/{view.capacity}명</Text>
-            {view.isMember ? (
-              <Text role="status">참여중</Text>
-            ) : (
-              <>
-                {unavailable && <Text c="dimmed" role="status">{unavailable}</Text>}
-                <Button size="md" mih={44} loading={submitting} disabled={Boolean(unavailable)} onClick={handleJoin}>
-                  참여하기
-                </Button>
-              </>
-            )}
-          </>
-        )}
-        {actionError && <Alert color="red" role="alert">{actionError}</Alert>}
-      </Stack>
-    </Card>
+    <Stack gap="sm">
+      <Card p="lg" bg="white">
+        <Stack gap="sm">
+          <Title order={2}>참여 상태</Title>
+          {!result ? (
+            <Group role="status">
+              <Loader size="sm" aria-hidden />
+              <Text>참여 상태를 불러오는 중입니다</Text>
+            </Group>
+          ) : result.error ? (
+            <Alert color="red" role="alert">{result.error}</Alert>
+          ) : view && (
+            <>
+              <Text>인원 {view.memberCount}/{view.capacity}명</Text>
+              {view.isMember ? (
+                <Text role="status">참여중</Text>
+              ) : (
+                <>
+                  {unavailable && <Text c="dimmed" role="status">{unavailable}</Text>}
+                  <Button size="md" mih={44} loading={submitting} disabled={Boolean(unavailable)} onClick={handleJoin}>
+                    참여하기
+                  </Button>
+                </>
+              )}
+            </>
+          )}
+          {actionError && <Alert color="red" role="alert">{actionError}</Alert>}
+        </Stack>
+      </Card>
+      {view?.isMember && <MyMenuSection view={view} userId={userId} now={now} refreshParticipation={refreshParticipation} />}
+    </Stack>
   )
 }

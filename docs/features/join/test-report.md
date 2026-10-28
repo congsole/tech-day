@@ -5,7 +5,7 @@
 - 대조 기준 커밋: 원격 `dev`의 `df16e925a52c58b4e4f8fb38dcb1c3d56939eac5` (PR #61 머지). 미머지 PR #68·#71·#72는 기준에서 제외
 - 근거: `docs/features/join/requirements.md` REQ-JOIN-01~05, `docs/features/join/screen.md` SCR-JOIN-01~03
 - 공통 기준: `docs/common/planning.md` §3, `docs/common/domain.md` 상태 모델, `docs/common/db-schema.md`의 `meal_members`·`order_items`·`confirm_order`·`get_meal_member_emails`·`start_due_orders`, `docs/common/design-system.md` §3~§6
-- 현재 상태: REQ-JOIN-01 구현 및 격리 환경 검증 완료(§5). 사용자가 실제 Supabase 연결에서 정상 참여·인원 증가·참여중 표시·새로고침 후 유지 확인. REQ-JOIN-02~05와 기능 간 통합 검증은 미실시.
+- 현재 상태: REQ-JOIN-01 구현 및 격리 환경 검증 완료(§5). 사용자가 실제 Supabase 연결에서 정상 참여·인원 증가·참여중 표시·새로고침 후 유지 확인. REQ-JOIN-02 격리 검증 완료(§6). REQ-JOIN-03~05와 기능 간 통합 검증은 미실시.
 - 아래 AC 식별자는 인수 조건의 테스트 구분용이며 새 요구사항 ID가 아님.
 
 ## 1. 문서 대조 결과
@@ -32,9 +32,9 @@
 | REQ-JOIN-01-AC02 | Given 정원이 가득 찬 겸상 / When 참여 시도 / Then 참여되지 않고 마감 안내가 표시된다 | 통과 (격리 검증) | 정원 마감 화면·서버 오류 반영 및 로컬 DB 삽입 차단 확인. 공용 Supabase 검증 아님 |
 | REQ-JOIN-01-AC03 | Given 마지막 한 자리에 여러 명이 동시에 참여 / When 처리 / Then 정원을 초과하지 않는다 | 통과 (격리 검증) | 로컬 PostgreSQL의 독립 연결 2개로 마지막 자리 동시 참여 20회 확인. 공용 Supabase 검증 아님 |
 | REQ-JOIN-01-AC04 | Given 이미 참여한 사용자 / When 다시 참여 시도 / Then 중복 참여되지 않는다 | 통과 (격리 검증) | 기존 참여 버튼 미표시·중복 응답 재조회 및 로컬 DB 복합 PK 차단 확인. 공용 Supabase 검증 아님 |
-| REQ-JOIN-02-AC01 | Given 겸상에 참여한 사용자 / When 메뉴명과 금액을 입력하고 추가 / Then 본인 메뉴 항목으로 저장된다 | 미실시 | join 기능 미구현 |
-| REQ-JOIN-02-AC02 | Given 금액이 비었거나 정수가 아님 / When 추가 / Then 저장되지 않고 안내가 표시된다 | 미실시 | join 기능 미구현 |
-| REQ-JOIN-02-AC03 | Given 본인 메뉴 항목이 여러 개 / When 조회 / Then 부담액이 금액의 합으로 표시된다 | 미실시 | join 기능 미구현 |
+| REQ-JOIN-02-AC01 | Given 겸상에 참여한 사용자 / When 메뉴명과 금액을 입력하고 추가 / Then 본인 메뉴 항목으로 저장된다 | 통과 (격리 검증) | API·컴포넌트와 격리 PostgreSQL에서 확인(§6). 공용 Supabase 검증은 미실시 |
+| REQ-JOIN-02-AC02 | Given 금액이 비었거나 정수가 아님 / When 추가 / Then 저장되지 않고 안내가 표시된다 | 통과 (격리 검증) | API·컴포넌트와 격리 PostgreSQL에서 확인(§6). 공용 Supabase 검증은 미실시 |
+| REQ-JOIN-02-AC03 | Given 본인 메뉴 항목이 여러 개 / When 조회 / Then 부담액이 금액의 합으로 표시된다 | 통과 (격리 검증) | API·컴포넌트와 격리 PostgreSQL에서 확인(§6). 공용 Supabase 검증은 미실시 |
 | REQ-JOIN-03-AC01 | Given 모집중이고 주문 확정 전인 참여자 / When 본인 메뉴 항목을 수정·삭제 / Then 반영된다 | 미실시 | join 기능 미구현 |
 | REQ-JOIN-03-AC02 | Given 모집중이고 주문 확정 전인 참여자(Host 아님) / When 참여 취소 / Then Member에서 빠지고 현재 인원이 1 감소한다 | 미실시 | join 기능 미구현 |
 | REQ-JOIN-03-AC03 | Given Host인 참여자 / When 참여 취소 시도 / Then 취소되지 않고 안내가 표시된다 (Host 넘기기 또는 겸상 취소 사용) | 미실시 | join 기능 미구현 |
@@ -131,3 +131,31 @@
 - 임시 테스트 환경은 `/tmp/techday-join-validation`(Vitest·미리보기), `/tmp/techday-join-db-validation`(DB)에서 실행했다. 제품 의존성·잠금 파일에는 테스트 도구를 추가하지 않았다.
 - 참여 후 공지·겸상 정보 등 다른 섹션 갱신은 #75 통합 PR 범위이며 이번 구현·검증에 포함하지 않았다. 공지 확인은 현재 상세를 새로 열어 참여 상태를 조회해야 한다.
 - §3의 메뉴·확정·취소·취합·사전 경고 및 전체 흐름 검증은 해당 후속 기능 구현 때 수행한다.
+
+## 6. REQ-JOIN-02 메뉴 입력 구현 검증
+
+- 검증일: 2026-10-28
+- 대상: `feature/join-menu`의 `MyMenuSection.tsx`, `menu-input.ts`, `api.ts`, `JoinSection.tsx`
+- 기준: #77이 머지된 최신 `dev`에서 분기. REQ-JOIN-02, SCR-JOIN-02·§6, `order_items`·`meal_members`·`is_meal_open`·RLS
+- 범위: 참여자 본인 메뉴 추가·조회·부담액 합계, 입력 오류, 확정·상태·예정 시간에 따른 입력 잠금, 빈 메뉴 사전 경고
+- 수정·삭제·참여 취소·주문 확정 동작과 Host 취합 현황은 #58~#60 후속 범위
+
+| 검증 | 환경·방법 | 결과 |
+|---|---|---|
+| 정적 검사·빌드 | `npm run lint`, `npm run build` | 통과. 번들 500kB 초과 경고 유지 |
+| 자동 검증 | 임시 Vitest 5.0.5·jsdom·Testing Library, 원본 API·컴포넌트에 모의 응답 | 기존 참여 회귀 포함 61건 통과 (화면 21건, 메뉴 API 12건 추가) |
+| 여러 메뉴와 합계 | 화면에서 9,000원·3,000원 순차 추가, 저장 목록 재조회 | 12,000원 합산, 미저장 입력 제외, 성공 후 입력 초기화 |
+| 입력 경계 | 공백 메뉴명, 빈 금액·소수·음수·DB integer 상한 초과, 0원 | 잘못된 입력 저장 차단·필드 안내, 0원 허용 |
+| 오류·잠금 | 실패 시 입력 유지, 재조회 실패, 확정·상태·마감 시각, 참여자 제외 응답 | 실패를 빈 메뉴·0원으로 대체하지 않음, 최신 잠금·비참여 상태 반영, 중복 제출 차단 |
+| 사전 경고 | 열린 겸상의 일반 참여자·Host 및 메뉴 저장 후 | 일반 참여자의 빈 메뉴에만 경고, 저장 후 숨김 |
+| 실제 DB | 격리 PostgreSQL 18.4, 원본 초기 마이그레이션의 테이블·제약·RLS, 가상 인증 역할 | 메뉴 3개(9,000·3,000·0원) 저장·합계 12,000원, 공백·음수·소수 거부 |
+| 실제 DB 권한·잠금 | 비참여자, 타인 user_id 지정, confirm_order 이후, 예정 시간 경과 후 삽입 | 모두 차단. 상태 자동 전환 전에도 시간 제한 적용 |
+| 화면·키보드 | 실제 Theme·컴포넌트와 모의 API, 내장 브라우저 데스크톱 1280px 및 375px iframe | 라벨·필드 오류·Enter 제출·저장 후 메뉴명 포커스 확인. 긴 메뉴명 줄바꿈과 2,147,483,647원 표시에서 가로 잘림 없음 |
+
+### 한계와 후속 확인
+
+- 브라우저는 모의 API, DB는 별도 격리 환경이다. 공용 Supabase의 실제 계정으로 메뉴 추가·새로고침 후 유지·합계를 확인하는 전체 연결 검증은 미실시. §5의 사용자 확인은 참여 기능에만 해당한다.
+- DB 검증은 pg_cron 설치·예약 등록을 제외한 기존 초기 마이그레이션을 적용하고 auth.users·auth.uid에 가상 사용자를 제공했다. 공용 DB를 변경하지 않았다.
+- 임시 검증 파일은 `/tmp/techday-join-validation`과 `/tmp/techday-join-db-validation/menu-check.mjs`에 있으며 제품 의존성과 잠금 파일에는 포함하지 않았다.
+- §3의 메뉴 관련 항목 중 이번에 확인한 입력 경계·사전 경고·추가 후 자체 갱신 범위는 위 표를 따른다. 삭제 후 경고 재표시, 변경·취소·확정, Host 현황 및 전체 흐름은 후속 구현에서 확인한다.
+- 다른 섹션과 공유 데이터 연결은 #75 통합 범위이며, 이번에는 join 자체 참여 상태와 내 메뉴만 재조회한다.
