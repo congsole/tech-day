@@ -165,7 +165,7 @@ export default function MyMenuSection({ meal, userId, now, onChanged }: Props) {
                           setEditingId(item.id); setEditName(item.name); setEditPrice(String(item.price))
                           setEditErrors({ nameError: null, priceError: null })
                         }}>수정</Button>
-                        <Button color="red.9" variant="light" disabled={Boolean(locked) || saving} onClick={() => void handleChangeMenu(item.id, true, Date.now())}>삭제</Button>
+                        <Button color="red" variant="light" disabled={Boolean(locked) || saving} onClick={() => void handleChangeMenu(item.id, true, Date.now())}>삭제</Button>
                       </Group>
                     </Group>
                   )}
