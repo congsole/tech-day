@@ -2,6 +2,7 @@ import { createElement } from 'react'
 import type { RouteObject } from 'react-router'
 import { NAME_SETUP_PATH } from '../../shared/RequireAuth'
 import LoginPage from './LoginPage'
+import MealCreatePage from './MealCreatePage'
 import MealListPage from './MealListPage'
 import NameSetupPage from './NameSetupPage'
 
@@ -12,4 +13,5 @@ export const mealPublicRoutes: RouteObject[] = [{ path: 'login', element: create
 export const mealRoutes: RouteObject[] = [
   { index: true, element: createElement(MealListPage) },
   { path: NAME_SETUP_PATH, element: createElement(NameSetupPage) },
+  { path: 'meals/new', element: createElement(MealCreatePage) },
 ]
