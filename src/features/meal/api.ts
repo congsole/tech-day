@@ -125,51 +125,6 @@ export async function createMeal(meal: NewMeal): Promise<ApiResult & { mealId: s
   return { error: null, mealId: data.id }
 }
 
-export type MealDetail = {
-  id: string
-  hostId: string
-  title: string
-  type: MealType
-  status: MealStatus
-  cancelReason: string | null
-  restaurantName: string | null
-  menuUrl: string | null
-  orderTime: string
-  capacity: number
-  memo: string | null
-  memberCount: number
-}
-
-// REQ-MEAL-03: 겸상 상세의 겸상 정보
-export async function getMealDetail(mealId: string): Promise<ApiResult & { meal: MealDetail | null }> {
-  const { data, error } = await supabase
-    .from('meals')
-    .select(
-      'id, host_id, title, type, status, cancel_reason, restaurant_name, menu_url, order_time, capacity, memo, meal_members(count)',
-    )
-    .eq('id', mealId)
-    .maybeSingle()
-  if (error) return { error: '겸상 정보를 불러오지 못했습니다. 새로 고침해 주세요.', meal: null }
-  if (!data) return { error: '겸상을 찾을 수 없습니다.', meal: null }
-  return {
-    error: null,
-    meal: {
-      id: data.id,
-      hostId: data.host_id,
-      title: data.title,
-      type: data.type,
-      status: data.status,
-      cancelReason: data.cancel_reason,
-      restaurantName: data.restaurant_name,
-      menuUrl: data.menu_url,
-      orderTime: data.order_time,
-      capacity: data.capacity,
-      memo: data.memo,
-      memberCount: data.meal_members[0]?.count ?? 0,
-    },
-  }
-}
-
 // REQ-MEAL-06: Host의 겸상 취소. Host·열려 있음 확인은 cancel_meal RPC가 한다.
 export async function cancelMeal(mealId: string, reason: string): Promise<ApiResult> {
   const { error } = await supabase.rpc('cancel_meal', { p_meal_id: mealId, p_reason: reason })
