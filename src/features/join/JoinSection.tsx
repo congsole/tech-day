@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Alert, Button, Card, Stack, Text, Title } from '@mantine/core'
+import { useOutletContext } from 'react-router'
 import type { MealDetail } from '../../shared/meal-detail-api'
+import type { AuthContext } from '../../shared/RequireAuth'
 import { joinMeal } from './api'
+import MyMenuSection from './MyMenuSection'
 
 type Props = {
   meal: MealDetail
@@ -9,8 +12,9 @@ type Props = {
   onChanged: () => Promise<void>
 }
 
-// REQ-JOIN-01 / SCR-JOIN-01
+// REQ-JOIN-01 / SCR-JOIN-01. 내 메뉴(SCR-JOIN-02)는 MyMenuSection
 export default function JoinSection({ meal, onChanged }: Props) {
+  const { userId } = useOutletContext<AuthContext>()
   const [submitting, setSubmitting] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const [now, setNow] = useState(() => Date.now())
@@ -50,22 +54,25 @@ export default function JoinSection({ meal, onChanged }: Props) {
   }
 
   return (
-    <Card p="lg" bg="white">
-      <Stack gap="sm">
-        <Title order={2}>참여 상태</Title>
-        <Text>인원 {meal.memberCount}/{meal.capacity}명</Text>
-        {meal.isMember ? (
-          <Text role="status">참여중</Text>
-        ) : (
-          <>
-            {unavailable && <Text c="dimmed" role="status">{unavailable}</Text>}
-            <Button size="md" mih={44} loading={submitting} disabled={Boolean(unavailable)} onClick={handleJoin}>
-              참여하기
-            </Button>
-          </>
-        )}
-        {actionError && <Alert color="red" role="alert">{actionError}</Alert>}
-      </Stack>
-    </Card>
+    <Stack gap="sm">
+      <Card p="lg" bg="white">
+        <Stack gap="sm">
+          <Title order={2}>참여 상태</Title>
+          <Text>인원 {meal.memberCount}/{meal.capacity}명</Text>
+          {meal.isMember ? (
+            <Text role="status">참여중</Text>
+          ) : (
+            <>
+              {unavailable && <Text c="dimmed" role="status">{unavailable}</Text>}
+              <Button size="md" mih={44} loading={submitting} disabled={Boolean(unavailable)} onClick={handleJoin}>
+                참여하기
+              </Button>
+            </>
+          )}
+          {actionError && <Alert color="red" role="alert">{actionError}</Alert>}
+        </Stack>
+      </Card>
+      {meal.isMember && <MyMenuSection meal={meal} userId={userId} now={now} onChanged={onChanged} />}
+    </Stack>
   )
 }
