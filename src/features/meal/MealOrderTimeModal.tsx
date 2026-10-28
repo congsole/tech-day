@@ -7,6 +7,8 @@ type Props = {
   // 현재 주문 예정 시간 (ISO 문자열)
   orderTime: string
   opened: boolean
+  // 대화상자가 열린 채 주문 예정 시간이 지남
+  closed: boolean
   onClose: () => void
   onUpdated: () => void
 }
@@ -19,7 +21,7 @@ function toLocalInput(iso: string): string {
 }
 
 // REQ-MEAL-07 주문 예정 시간 수정 대화상자 (SCR-MEAL-ORDER-TIME)
-export default function MealOrderTimeModal({ mealId, orderTime, opened, onClose, onUpdated }: Props) {
+export default function MealOrderTimeModal({ mealId, orderTime, opened, closed, onClose, onUpdated }: Props) {
   const [value, setValue] = useState(() => toLocalInput(orderTime))
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -33,6 +35,7 @@ export default function MealOrderTimeModal({ mealId, orderTime, opened, onClose,
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
+    if (closed) return
     if (!value || new Date(value).getTime() <= Date.now()) {
       setError('현재 이후 시각을 입력해 주세요.')
       return
@@ -63,7 +66,7 @@ export default function MealOrderTimeModal({ mealId, orderTime, opened, onClose,
               setValue(e.currentTarget.value)
               setError(null)
             }}
-            error={error}
+            error={closed ? '모집중일 때만 주문 예정 시간을 수정할 수 있습니다.' : error}
             description="이 시각이 되면 참여·메뉴 변경이 잠깁니다."
             disabled={loading}
           />
@@ -71,7 +74,7 @@ export default function MealOrderTimeModal({ mealId, orderTime, opened, onClose,
             <Button variant="default" size="md" onClick={close} disabled={loading}>
               돌아가기
             </Button>
-            <Button type="submit" size="md" loading={loading}>
+            <Button type="submit" size="md" loading={loading} disabled={closed}>
               저장
             </Button>
           </Group>
