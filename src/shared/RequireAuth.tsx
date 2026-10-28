@@ -3,6 +3,7 @@ import { Center, Loader, Text } from '@mantine/core'
 import type { Session } from '@supabase/supabase-js'
 import { Navigate, Outlet, useLocation } from 'react-router'
 import { getMyDisplayName, watchSession } from '../features/meal/api'
+import { LOGIN_PATH } from './route-paths'
 
 export const NAME_SETUP_PATH = '/setup-name'
 
@@ -38,7 +39,7 @@ export default function RequireAuth() {
   }, [userId])
 
   if (session === null) {
-    return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />
+    return <Navigate to={LOGIN_PATH} replace state={{ from: location.pathname + location.search }} />
   }
   if (!userId || profile?.userId !== userId) {
     return (
