@@ -1,10 +1,11 @@
 import { Anchor, Box, Container } from '@mantine/core'
 import { Link, Outlet, useLocation } from 'react-router'
+import { LOGIN_PATH } from './route-paths'
 
 // LAYOUT-HEADER: 로그인 화면을 제외한 공통 목록 이동 경로. 인증·이름 설정은 기존 가드가 처리한다.
 export default function Layout() {
   const { pathname } = useLocation()
-  const showHeader = pathname.replace(/\/+$/, '') !== '/login'
+  const showHeader = pathname.replace(/\/+$/, '') !== LOGIN_PATH
 
   return (
     <Box bg="gray.0" mih="100dvh">
