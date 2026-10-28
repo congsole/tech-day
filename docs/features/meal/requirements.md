@@ -31,7 +31,7 @@
 ### REQ-MEAL-04 모집중 겸상 목록 보기
 - 동작: 상태가 모집중인 겸상을 목록으로 본다.
 - 인수 조건:
-  - Given 여러 상태의 겸상이 있음 / When 목록 화면에 진입 / Then 모집중 상태만 노출된다 (주문중·주문완료·정산·취소 제외)
+  - Given 여러 상태의 겸상이 있음 / When 목록 화면에 진입 / Then 모집중 목록에는 모집중 상태만 노출된다 (주문중·주문완료·정산·취소 제외. 내 겸상은 REQ-MEAL-10)
   - Given 각 겸상 / When 목록에 표시 / Then 제목·유형·현재 인원/정원이 보인다
 - 참조: `docs/common/planning.md` §3 목록 화면, `docs/common/domain.md` status
 
@@ -76,3 +76,13 @@
   - Given Host 넘기기 요청 / When 주문 예정 시간까지 아무도 수락하지 않음 / Then 겸상 상태가 취소가 된다
   - Given Host 넘기기 실패로 취소된 겸상 / When 목록 조회 / Then 모집중 목록에서 제외된다
 - 참조: `docs/common/planning.md` §3 Host 넘기기, `docs/common/domain.md` 상태 모델·Host 넘기기, `docs/common/db-schema.md` `host_handover_rejections`·§6 `reject_host_handover`·`resolve_host_handover`·§7 `close-due-meals`
+
+### REQ-MEAL-10 내 겸상 보기
+- 동작: 목록 화면에서 내가 Host이거나 참여 중인 겸상(내 겸상)을 상태와 관계없이 보고 상세로 들어간다. 끝난 겸상(정산·취소)은 주문 예정 시간 기준 최근 7일까지만 보인다. 모집중 목록(REQ-MEAL-04)과 구분해 표시한다.
+- 인수 조건:
+  - Given 내가 Host이거나 참여 중인 여러 상태의 겸상이 있고, 정산·취소 겸상은 주문 예정 시간이 최근 7일 이내임 / When 목록 화면에 진입 / Then 내 겸상에 모집중·주문중·주문완료·정산·취소 겸상이 모두 노출된다
+  - Given 주문 예정 시간이 7일 넘게 지난 정산·취소 겸상 / When 목록 화면에 진입 / Then 내 겸상에 노출되지 않는다
+  - Given 내가 참여하지 않은 겸상 / When 목록 화면에 진입 / Then 내 겸상에 노출되지 않는다
+  - Given 내 겸상의 각 겸상 / When 목록에 표시 / Then 제목·유형·상태가 보인다
+  - Given 내 겸상의 겸상 / When 누름 / Then 해당 겸상 상세로 이동한다
+- 참조: `docs/common/planning.md` §3 목록 화면, `docs/common/domain.md` 내 겸상(myMeals)·상태 모델, `docs/common/db-schema.md` §9 내 겸상 조회
