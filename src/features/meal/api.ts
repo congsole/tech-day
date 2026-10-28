@@ -97,9 +97,9 @@ export type MealStatus = Database['public']['Enums']['meal_status']
 export type NewMeal = {
   title: string
   type: MealType
-  restaurantName: string | null
+  restaurantName: string
   menuUrl: string | null
-  place: string | null
+  place: string
   orderTime: Date
   capacity: number
   memo: string | null
