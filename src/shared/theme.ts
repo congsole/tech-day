@@ -1,4 +1,4 @@
-import { Card, Input, createTheme, rem, type CSSVariablesResolver } from '@mantine/core'
+import { Button, Card, Input, PinInput, createTheme, rem, type CSSVariablesResolver } from '@mantine/core'
 
 // 값의 근거: docs/common/design-system.md §3
 export const theme = createTheme({
@@ -25,8 +25,15 @@ export const theme = createTheme({
     lg: rem(12), // 카드
   },
   components: {
+    // 주요 조작 영역 최소 44px. 더 큰 size 및 여러 줄 입력은 유지한다.
+    Button: Button.extend({ styles: { root: { minHeight: rem(44) } } }),
+    PinInput: PinInput.extend({
+      defaultProps: { gap: 4 },
+      styles: { root: { flexWrap: 'wrap' }, input: { minWidth: rem(44), minHeight: rem(44) } },
+    }),
     Input: Input.extend({
       styles: (_, props) => ({
+        input: props.variant === 'unstyled' ? undefined : { minHeight: rem(44) },
         // 포커스는 input의 변수로, 오류·성공은 Mantine 상태 스타일로 처리한다.
         wrapper: {
           '--input-bd':
