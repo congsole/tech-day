@@ -1,7 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Anchor, Badge, Card, Center, Group, Loader, Stack, Text, Title } from '@mantine/core'
-import { useParams } from 'react-router'
-import { getMealDetail, type MealDetail } from './api'
+import { Anchor, Badge, Card, Group, Stack, Text, Title } from '@mantine/core'
+import type { MealDetail } from '../../shared/meal-detail-api'
 import { MEAL_STATUS_LABEL, MEAL_TYPE_LABEL } from './labels'
 
 const orderTimeFormat = new Intl.DateTimeFormat('ko-KR', {
@@ -14,34 +12,7 @@ const orderTimeFormat = new Intl.DateTimeFormat('ko-KR', {
 
 // 겸상 상세의 meal 섹션. 겸상 정보(REQ-MEAL-03)와 Host 관리 동작(REQ-MEAL-05~07)
 // 집합/수령 장소 항목은 이 섹션 안에 들어온다(SCR-MEAL-INFO). 표시·수정 UI는 REQ-NOTICE-02 구현 후 붙인다.
-export default function MealInfoSection() {
-  const { mealId } = useParams()
-  // null: 불러오는 중
-  const [result, setResult] = useState<{ mealId: string; error: string | null; meal: MealDetail | null } | null>(null)
-
-  useEffect(() => {
-    if (!mealId) return
-    let ignore = false
-    getMealDetail(mealId).then((next) => {
-      if (!ignore) setResult({ mealId, ...next })
-    })
-    return () => {
-      ignore = true
-    }
-  }, [mealId])
-
-  if (!result || result.mealId !== mealId) {
-    return (
-      <Center py="xl">
-        <Loader aria-label="겸상 정보 불러오는 중" />
-      </Center>
-    )
-  }
-  if (result.error || !result.meal) {
-    return <Text c="var(--mantine-color-error)">{result.error}</Text>
-  }
-
-  const meal = result.meal
+export default function MealInfoSection({ meal }: { meal: MealDetail }) {
   return (
     <Card p="lg" bg="white">
       <Stack gap="sm">
