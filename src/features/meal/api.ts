@@ -91,6 +91,44 @@ export async function getRecruitingMeals(): Promise<ApiResult & { meals: Recruit
   }
 }
 
+export type MyMeal = {
+  id: string
+  title: string
+  type: MealType
+  status: MealStatus
+  orderTime: string
+}
+
+// 끝난 겸상(정산·취소)을 내 겸상에 남겨 두는 기간
+const ENDED_MEAL_DAYS = 7
+const ENDED_STATUSES: MealStatus[] = ['settling', 'canceled']
+
+// REQ-MEAL-10 내 겸상. Host도 참여 행이 있으므로 참여 행으로 조회한다. docs/common/db-schema.md §9
+// 정렬: 진행 중을 주문 예정 시간이 가까운 순, 그 아래 끝난 겸상을 최근 순 (SCR-MEAL-LIST)
+export async function getMyMeals(userId: string): Promise<ApiResult & { meals: MyMeal[] }> {
+  const since = new Date(Date.now() - ENDED_MEAL_DAYS * 24 * 60 * 60 * 1000).toISOString()
+  const { data, error } = await supabase
+    .from('meal_members')
+    .select('meals!inner(id, title, type, status, order_time)')
+    .eq('user_id', userId)
+    .or(`status.in.(recruiting,ordering,ordered),order_time.gte.${since}`, { referencedTable: 'meals' })
+  if (error) return { error: '내 겸상을 불러오지 못했습니다. 새로 고침해 주세요.', meals: [] }
+  const meals = data.map(({ meals: meal }) => ({
+    id: meal.id,
+    title: meal.title,
+    type: meal.type,
+    status: meal.status,
+    orderTime: meal.order_time,
+  }))
+  const isEnded = (meal: MyMeal) => ENDED_STATUSES.includes(meal.status)
+  const time = (meal: MyMeal) => new Date(meal.orderTime).getTime()
+  meals.sort((a, b) => {
+    if (isEnded(a) !== isEnded(b)) return isEnded(a) ? 1 : -1
+    return isEnded(a) ? time(b) - time(a) : time(a) - time(b)
+  })
+  return { error: null, meals }
+}
+
 export type MealType = Database['public']['Enums']['meal_type']
 export type MealStatus = Database['public']['Enums']['meal_status']
 
