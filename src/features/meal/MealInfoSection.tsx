@@ -50,9 +50,11 @@ export default function MealInfoSection({ meal, onChanged }: Props) {
     if (request === latestHandoverLoad.current) setLoadedHandover(latest)
   }, [meal.id])
 
+  // Host·상태·내 참여 여부가 바뀌어도 다시 조회한다. 수락으로 참여에서 빠진 기존 Host는
+  // 넘기기 이벤트를 받지 못하므로(RLS) 겸상 정보 변경을 계기로 최신 상태를 맞춘다
   useEffect(() => {
     void loadHandover()
-  }, [loadHandover])
+  }, [loadHandover, meal.hostId, meal.status, meal.isMember])
 
   // 다른 사용자의 넘기기 요청·거절·수락을 새로 고침 없이 반영한다(#81)
   const pendingHandoverId = loadedHandover?.handover?.status === 'pending' ? loadedHandover.handover.id : null
@@ -139,7 +141,8 @@ export default function MealInfoSection({ meal, onChanged }: Props) {
           </Stack>
         </Card>
       )}
-      {!isHost && isOpen && handoverPending && handover && (
+      {/* Host가 아닌 참여자에게만 (SCR-MEAL-INFO Host 넘기기 대기 중) */}
+      {!isHost && meal.isMember && isOpen && handoverPending && handover && (
         <MealHandoverResponse
           key={handover.id}
           handover={handover}
