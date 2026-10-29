@@ -5,6 +5,7 @@ import type { MealDetail } from '../../shared/meal-detail-api'
 import type { AuthContext } from '../../shared/RequireAuth'
 import { joinMeal } from './api'
 import MyMenuSection from './MyMenuSection'
+import MemberSummarySection from './MemberSummarySection'
 
 type Props = {
   meal: MealDetail
@@ -73,6 +74,7 @@ export default function JoinSection({ meal, onChanged }: Props) {
         </Stack>
       </Card>
       {meal.isMember && <MyMenuSection meal={meal} userId={userId} now={now} onChanged={onChanged} />}
+      {meal.isHost && <MemberSummarySection meal={meal} />}
     </Stack>
   )
 }

@@ -43,10 +43,10 @@
 | REQ-JOIN-04-AC01 | Given 메뉴 항목이 하나 이상인 참여자 / When 주문 확정 / Then 본인 메뉴가 잠기고 확정 시각이 기록된다 | 통과 (모의 화면·격리 DB) | §9 참고. 공용 Supabase 실환경 검증은 미실시 |
 | REQ-JOIN-04-AC02 | Given 메뉴 항목이 하나도 없는 참여자 / When 주문 확정 시도 / Then 확정되지 않고 안내가 표시된다 | 통과 (모의 화면·격리 DB) | §9 참고. 공용 Supabase 실환경 검증은 미실시 |
 | REQ-JOIN-04-AC03 | Given 확정한 참여자 / When 상태 조회 / Then '확정됨'으로 표시된다 | 통과 (모의 화면·격리 DB) | §9 참고. 공용 Supabase 실환경 검증은 미실시 |
-| REQ-JOIN-05-AC01 | Given 참여자들이 메뉴를 입력한 겸상 / When Host가 현황 화면에 진입 / Then 참여자별 메뉴·금액 목록이 보인다 | 미실시 | join 기능 미구현 |
-| REQ-JOIN-05-AC02 | Given Host가 현황 화면을 봄 / When 참여자 정보 표시 / Then 각 참여자의 이름(본명)과 이메일 주소가 함께 표시된다 | 미실시 | join 기능 미구현 |
-| REQ-JOIN-05-AC03 | Given 각 참여자 / When 현황 표시 / Then 확정/미확정이 구분되어 보인다 | 미실시 | join 기능 미구현 |
-| REQ-JOIN-05-AC04 | Given 현황 화면 / When 조회 / Then 전체 합계 금액이 표시된다 | 미실시 | join 기능 미구현 |
+| REQ-JOIN-05-AC01 | Given 참여자들이 메뉴를 입력한 겸상 / When Host가 현황 화면에 진입 / Then 참여자별 메뉴·금액 목록이 보인다 | 통과 (모의 화면·API) | §10 참고. 권한은 격리 DB 검증, 실제 Supabase UI는 보류 |
+| REQ-JOIN-05-AC02 | Given Host가 현황 화면을 봄 / When 참여자 정보 표시 / Then 각 참여자의 이름(본명)과 이메일 주소가 함께 표시된다 | 통과 (모의 화면·API) | §10 참고. 권한은 격리 DB 검증, 실제 Supabase UI는 보류 |
+| REQ-JOIN-05-AC03 | Given 각 참여자 / When 현황 표시 / Then 확정/미확정이 구분되어 보인다 | 통과 (모의 화면·API) | §10 참고. 권한은 격리 DB 검증, 실제 Supabase UI는 보류 |
+| REQ-JOIN-05-AC04 | Given 현황 화면 / When 조회 / Then 전체 합계 금액이 표시된다 | 통과 (모의 화면·API) | §10 참고. 권한은 격리 DB 검증, 실제 Supabase UI는 보류 |
 
 ## 3. 공통·경계·연계 검증
 
@@ -325,3 +325,29 @@
 - 모의 화면과 격리 DB 검증이며 공용 Supabase 데이터·스키마는 변경하지 않았다. 실제 브라우저에서의 모바일 배치·키보드 및 공용 Supabase 확정 흐름은 미실시.
 - 격리 DB는 초기 마이그레이션에서 pg_cron 설치·예약 등록만 제외하고 가상 `auth.users`·`auth.uid()`로 실행했다. 이번 구현에는 DB 변경이 없다.
 - 임시 검증 파일: `/tmp/techday-join-validation/confirm.test.tsx`, `confirm-api.test.ts`, `/tmp/techday-join-db-validation/confirm-check.mjs`. 제품 의존성·잠금 파일에는 테스트 도구를 추가하지 않았다.
+
+## 10. REQ-JOIN-05 Host 취합·확정 현황 (#60)
+
+- 검증일: 2026-10-29
+- 기준: `dev` `5fd0d0f`에서 분기한 `feature/join-summary`, REQ-JOIN-05, SCR-JOIN-03·§6
+- 범위: Host 전용 참여자 이름·이메일·메뉴·확정 여부·개인 부담액·전체 합계 조회
+- 데이터: `meal_members`에 `profiles`·`order_items`를 결합하고 이메일은 `get_meal_member_emails`로 조회. DB 변경 없음
+- 갱신: 부모 공유 데이터 재조회마다 현황 재조회. 이전 요청의 늦은 응답 무시, Host가 아니면 조회·표시 중단. 별도 구독·주기 조회 없음. 다른 사용자의 메뉴 입력만으로 실시간 갱신하는 동작은 이번 범위에 없음
+
+| 항목 | 방법 | 결과 |
+|---|---|---|
+| 정적 검사·빌드 | `npm run lint`, `npm run build` | 통과. 기존 500kB 번들 경고 유지 |
+| 화면·API | 임시 Vitest·jsdom·Testing Library, 원본 컴포넌트/API와 모의 응답 | 13건 통과 |
+| 표시·합계 | Host 빈 메뉴, 확정 참여자의 9,000원·3,000원 메뉴 | 이름·이메일·확정/미확정·메뉴 미입력·개인 부담액·전체 12,000원 표시 |
+| 오류 | 이메일 RPC 실패·Host 거부·참여자 조회 실패·정보 누락·예외 | 실패 안내, 빈 메뉴·전체 0원으로 대체하지 않음 |
+| 갱신·권한 | 부모 데이터 갱신, 역순 조회 응답, Host 권한 상실 | 현황 재조회, 과거 응답 무시, 일반 참여자 조회 없음·이메일 즉시 숨김 |
+| DB 권한 | 격리 PostgreSQL, 초기 마이그레이션·가상 인증 사용자 | Host 이메일 조회 성공, 일반 참여자·비참여자 not_host 거부, 비참여자 메뉴 조회 차단 |
+| Host 포함 | 격리 DB의 Host 3,000원 및 참여자 10,000원 | 합계 13,000원, 메뉴 없는 Host 참여 행 유지 |
+| 반응형 | 실제 Theme·컴포넌트와 가상 데이터, 내장 브라우저 375px·1280px | 긴 이메일·메뉴명 줄바꿈, 가로 넘침 없음. 각 clientWidth와 scrollWidth 일치 |
+
+### 검증 한계
+
+- 공용 Supabase의 기존 검증 겸상 조회는 자동 승인 검토에서 참여자 이름·이메일 접근에 대한 명시적 승인 필요로 차단되어 보류했다. 공용 데이터 변경 없음.
+- DB 검증은 pg_cron 설치·예약 등록을 제외한 초기 마이그레이션과 가상 auth 사용자로 실행했다. 실제 PostgREST의 중첩 조회는 타입 검사·모의 API 검증 범위이며 공용 연결 검증은 미실시.
+- PR #95는 검증 시점에 미머지 상태. 본 변경은 그 PR을 포함하지 않으며 부모 공유 데이터 갱신 구조에 맞춰 연결했다.
+- 임시 검증: `/tmp/techday-join-validation/summary.test.tsx`, `summary-api.test.ts`, `/tmp/techday-join-db-validation/summary-check.mjs`, `/tmp/techday-summary-preview`. 제품 의존성·잠금 파일 변경 없음.
