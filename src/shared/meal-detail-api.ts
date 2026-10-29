@@ -69,3 +69,22 @@ export async function getMealDetail(mealId: string, userId: string): Promise<Mea
     return { meal: null, error: loadError }
   }
 }
+
+// 이 겸상의 meals·meal_members 변경을 알린다(#81). 수신하면 getMealDetail로 다시 조회한다.
+// 반환 함수로 구독을 해제한다. docs/common/db-schema.md §10
+export function subscribeMealDetail(mealId: string, onChange: () => void): () => void {
+  // 같은 이름의 채널은 재사용되므로, 해제 중인 채널을 다시 받지 않도록 구독마다 이름을 새로 만든다
+  const channel = supabase
+    .channel(`meal-detail:${mealId}:${crypto.randomUUID()}`)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'meals', filter: `id=eq.${mealId}` }, onChange)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'meal_members', filter: `meal_id=eq.${mealId}` }, onChange)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'meal_members', filter: `meal_id=eq.${mealId}` }, onChange)
+    // 삭제 이벤트는 필터를 쓸 수 없어 이전 행의 PK로 해당 겸상인지 확인한다
+    .on<{ meal_id: string }>('postgres_changes', { event: 'DELETE', schema: 'public', table: 'meal_members' }, (payload) => {
+      if (payload.old.meal_id === mealId) onChange()
+    })
+    .subscribe()
+  return () => {
+    void supabase.removeChannel(channel)
+  }
+}

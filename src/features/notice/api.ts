@@ -24,3 +24,16 @@ export async function createNotice(mealId: string, content: string): Promise<Res
   if (error.code === '23514') return { error: '공지 내용을 입력하세요.' }
   return { error: '공지를 올리지 못했습니다.' }
 }
+
+// 이 겸상에 공지가 올라오면 알린다(#81). 수신하면 getNotices로 다시 조회한다.
+// 참여자에게만 전달된다(RLS). 반환 함수로 구독을 해제한다. docs/common/db-schema.md §10
+export function subscribeNotices(mealId: string, onChange: () => void): () => void {
+  // 같은 이름의 채널은 재사용되므로, 해제 중인 채널을 다시 받지 않도록 구독마다 이름을 새로 만든다
+  const channel = supabase
+    .channel(`notices:${mealId}:${crypto.randomUUID()}`)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notices', filter: `meal_id=eq.${mealId}` }, onChange)
+    .subscribe()
+  return () => {
+    void supabase.removeChannel(channel)
+  }
+}

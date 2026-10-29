@@ -6,7 +6,7 @@ import JoinSection from '../features/join/JoinSection'
 import NoticeSection from '../features/notice/NoticeSection'
 import SettleSection from '../features/settle/SettleSection'
 import type { AuthContext } from './RequireAuth'
-import { getMealDetail, type MealDetailResult } from './meal-detail-api'
+import { getMealDetail, subscribeMealDetail, type MealDetailResult } from './meal-detail-api'
 
 // 겸상 상세는 여러 기능이 함께 쓰므로 섹션 단위로 나눈다. 각 섹션은 담당 기능 폴더에서 구현한다.
 // 공지는 맨 위의 띠로 둔다. docs/features/notice/screen.md SCR-NOTICE-01
@@ -36,6 +36,9 @@ function MealDetailContent({ mealId, userId }: { mealId: string; userId: string 
       ignore = true
     }
   }, [mealId, userId])
+
+  // 다른 사용자의 참여·취소, 상태 전환을 새로 고침 없이 반영한다(#81)
+  useEffect(() => subscribeMealDetail(mealId, () => void reload()), [mealId, reload])
 
   if (!result) {
     return (

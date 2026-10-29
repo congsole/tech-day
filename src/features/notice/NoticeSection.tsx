@@ -2,7 +2,7 @@ import { Fragment, useEffect, useState, type FormEvent } from 'react'
 import { useMediaQuery } from '@mantine/hooks'
 import { Alert, Badge, Button, Card, Divider, Drawer, Group, Stack, Text, Textarea } from '@mantine/core'
 import type { MealDetail } from '../../shared/meal-detail-api'
-import { createNotice, getNotices, type Notice } from './api'
+import { createNotice, getNotices, subscribeNotices, type Notice } from './api'
 
 const timeFormat = new Intl.DateTimeFormat('ko-KR', {
   month: 'long',
@@ -28,17 +28,23 @@ export default function NoticeSection({ meal }: { meal: MealDetail }) {
   const [inputError, setInputError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  // 참여 직후에도 띠가 보이도록 참여 여부가 바뀌면 다시 조회한다
+  // 참여 직후에도 띠가 보이도록 참여 여부가 바뀌면 다시 조회한다.
+  // 다른 사람이 올린 공지도 새로 고침 없이 반영한다(#81)
   useEffect(() => {
     if (!isMember) return
     let ignore = false
-    getNotices(mealId).then((result) => {
-      if (ignore) return
-      setNotices(result.data ?? null)
-      setLoadError(result.error ?? null)
-    })
+    function load() {
+      getNotices(mealId).then((result) => {
+        if (ignore) return
+        setNotices(result.data ?? null)
+        setLoadError(result.error ?? null)
+      })
+    }
+    load()
+    const unsubscribe = subscribeNotices(mealId, load)
     return () => {
       ignore = true
+      unsubscribe()
     }
   }, [mealId, isMember])
 

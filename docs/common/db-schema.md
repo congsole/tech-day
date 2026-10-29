@@ -244,3 +244,20 @@ profiles(Host) 1─* meals 1─* meal_members *─1 profiles
 - 내 겸상: `meal_members`를 `user_id = auth.uid()`로 거르고(`(user_id)` 인덱스) `meals`를 함께 조회. `settling`·`canceled`는 `order_time >= now() - interval '7 days'`인 것만. Host도 참여 행이 있으므로 같은 조회로 포함된다. 스키마 변경 없음
 - 참여자별 부담액: `meal_members`와 `profiles(display_name)`, `order_items(price)`를 함께 조회해 `api.ts`에서 합산
 - 공지: `notices`를 `meal_id`로 거르고 `created_at` 내림차순
+
+## 10. 실시간 구독 (Realtime)
+
+결정 #81. 새로 고침 없이 다른 사용자의 변경을 반영하기 위해 Supabase Realtime의 Postgres Changes를 쓴다. 주기 조회는 쓰지 않는다.
+
+| 테이블 | 구독 위치 | 이벤트 |
+|---|---|---|
+| `meals` | `MealDetailPage` | 해당 겸상 행 수정 |
+| `meal_members` | `MealDetailPage` | 해당 겸상의 추가·수정·삭제 |
+| `notices` | notice 섹션 | 해당 겸상의 추가 |
+| `host_handovers` | meal 섹션 | 해당 겸상의 추가·수정 |
+| `host_handover_rejections` | meal 섹션 | 해당 요청의 추가 |
+
+- 위 다섯 테이블을 `supabase_realtime` 발행 대상에 넣는다.
+- 이벤트는 변경 알림으로만 쓴다. 수신하면 기존 조회 함수로 다시 조회하고, 이벤트에 담긴 행으로 화면 데이터를 직접 바꾸지 않는다.
+- 추가·수정 이벤트는 §5의 조회 권한(RLS)을 따른다. `notices`와 넘기기 테이블의 변경은 그 겸상의 Host와 참여자에게만 전달된다.
+- 삭제 이벤트는 필터를 쓸 수 없고 이전 행에 PK만 담긴다. `meal_members` 삭제는 PK의 `meal_id`로 해당 겸상인지 확인한다.
