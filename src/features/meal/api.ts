@@ -191,6 +191,31 @@ export async function getLatestHandover(mealId: string): Promise<ApiResult & { h
   }
 }
 
+// 이 겸상의 Host 넘기기 요청·상태 변경과, 대기 중인 요청의 거절을 알린다(#81). 수신하면 getLatestHandover로 다시 조회한다.
+// 그 겸상의 Host와 참여자에게만 전달된다(RLS). 반환 함수로 구독을 해제한다. docs/common/db-schema.md §10
+export function subscribeHandover(mealId: string, pendingHandoverId: string | null, onChange: () => void): () => void {
+  // 같은 이름의 채널은 재사용되므로, 해제 중인 채널을 다시 받지 않도록 구독마다 이름을 새로 만든다
+  let channel = supabase
+    .channel(`meal-handover:${mealId}:${crypto.randomUUID()}`)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'host_handovers', filter: `meal_id=eq.${mealId}` }, onChange)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'host_handovers', filter: `meal_id=eq.${mealId}` }, onChange)
+  // 거절 행에는 겸상 ID가 없어 대기 중인 요청 ID로 거른다
+  if (pendingHandoverId) {
+    channel = channel.on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'host_handover_rejections', filter: `handover_id=eq.${pendingHandoverId}` },
+      onChange,
+    )
+  }
+  // 연결 전이나 끊긴 동안의 변경은 이벤트로 오지 않으므로, 연결(재연결 포함)될 때마다 다시 조회한다
+  channel.subscribe((status) => {
+    if (status === 'SUBSCRIBED') onChange()
+  })
+  return () => {
+    void supabase.removeChannel(channel)
+  }
+}
+
 // REQ-MEAL-05: Host 넘기기 요청. Host·열려 있음·대기 중 여부·다른 참여자 확인은 request_host_handover RPC가 한다.
 export async function requestHandover(mealId: string, reason: string): Promise<ApiResult> {
   const { error } = await supabase.rpc('request_host_handover', { p_meal_id: mealId, p_reason: reason })

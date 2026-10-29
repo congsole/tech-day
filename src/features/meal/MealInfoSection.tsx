@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Anchor, Badge, Button, Card, Group, Stack, Text, Title } from '@mantine/core'
 import { useOutletContext } from 'react-router'
 import type { AuthContext } from '../../shared/RequireAuth'
 import type { MealDetail } from '../../shared/meal-detail-api'
-import { getLatestHandover, type Handover } from './api'
+import { getLatestHandover, subscribeHandover, type Handover } from './api'
 import { MEAL_STATUS_LABEL, MEAL_TYPE_LABEL } from './labels'
 import MealCancelModal from './MealCancelModal'
 import MealHandoverModal from './MealHandoverModal'
@@ -17,8 +17,6 @@ const orderTimeFormat = new Intl.DateTimeFormat('ko-KR', {
   hour: '2-digit',
   minute: '2-digit',
 })
-
-type LoadedHandover = { reloadKey: number; error: string | null; handover: Handover | null }
 
 // setTimeout이 다룰 수 있는 최대 지연(약 24일). 그보다 먼 주문 예정 시간은 타이머를 걸지 않는다
 const MAX_TIMEOUT = 2 ** 31 - 1
@@ -40,21 +38,28 @@ export default function MealInfoSection({ meal, onChanged }: Props) {
   const [handoverOpened, setHandoverOpened] = useState(false)
   // 상세를 보는 중 지나간 주문 예정 시간. 이 값과 같으면 겸상이 닫힌 것으로 본다
   const [passedOrderTime, setPassedOrderTime] = useState<string | null>(null)
-  // Host 넘기기는 meal 섹션만 쓰는 데이터라 여기서 조회한다. 값이 바뀌면 다시 불러온다
-  const [handoverReloadKey, setHandoverReloadKey] = useState(0)
-  // null: 불러오는 중
-  const [loadedHandover, setLoadedHandover] = useState<LoadedHandover | null>(null)
+  // Host 넘기기는 meal 섹션만 쓰는 데이터라 여기서 조회한다. null: 불러오는 중
+  const [loadedHandover, setLoadedHandover] = useState<{ error: string | null; handover: Handover | null } | null>(null)
+  // 마지막으로 보낸 조회 번호. 조회가 겹치면 늦게 도착한 이전 응답이 최신 상태를 덮지 않게 한다
+  const latestHandoverLoad = useRef(0)
   const orderTime = meal.orderTime
 
+  const loadHandover = useCallback(async () => {
+    const request = ++latestHandoverLoad.current
+    const latest = await getLatestHandover(meal.id)
+    if (request === latestHandoverLoad.current) setLoadedHandover(latest)
+  }, [meal.id])
+
   useEffect(() => {
-    let ignore = false
-    getLatestHandover(meal.id).then((latest) => {
-      if (!ignore) setLoadedHandover({ reloadKey: handoverReloadKey, ...latest })
-    })
-    return () => {
-      ignore = true
-    }
-  }, [meal.id, handoverReloadKey])
+    void loadHandover()
+  }, [loadHandover])
+
+  // 다른 사용자의 넘기기 요청·거절·수락을 새로 고침 없이 반영한다(#81)
+  const pendingHandoverId = loadedHandover?.handover?.status === 'pending' ? loadedHandover.handover.id : null
+  useEffect(
+    () => subscribeHandover(meal.id, pendingHandoverId, () => void loadHandover()),
+    [meal.id, pendingHandoverId, loadHandover],
+  )
 
   // 주문 예정 시간이 되면 새로 고침 없이 Host 관리 동작을 닫는다
   useEffect(() => {
@@ -68,17 +73,16 @@ export default function MealInfoSection({ meal, onChanged }: Props) {
   const isOpen =
     meal.status === 'recruiting' && new Date(meal.orderTime).getTime() > shownAt && passedOrderTime !== meal.orderTime
   const isHost = meal.isHost
-  // 넘기기 정보를 다 불러오기 전에는 대기 여부를 모르므로 Host 관리 동작을 보이지 않는다
-  const handoverLoaded = loadedHandover?.reloadKey === handoverReloadKey
-  const canManage = isHost && isOpen && handoverLoaded
+  // 넘기기 정보를 처음 불러오기 전에는 대기 여부를 모르므로 Host 관리 동작을 보이지 않는다
+  const canManage = isHost && isOpen && loadedHandover !== null
   const handover = loadedHandover?.handover ?? null
   const handoverPending = handover?.status === 'pending'
   // Host를 뺀 참여자 수. 넘기기 대상
   const otherMemberCount = meal.memberCount - 1
   // 넘기기·취소·시간 수정은 겸상 정보(공유)와 넘기기 정보를 함께 바꿀 수 있다
   const reload = () => {
-    setHandoverReloadKey((key) => key + 1)
-    onChanged()
+    void loadHandover()
+    void onChanged()
   }
 
   return (
