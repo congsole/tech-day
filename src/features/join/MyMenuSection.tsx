@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Alert, Badge, Button, Card, Group, Loader, Modal, Stack, Text, TextInput, Title } from '@mantine/core'
+import { Alert, Badge, Button, Card, Flex, Group, Loader, Modal, Stack, Text, TextInput, Title } from '@mantine/core'
 import type { MealDetail } from '../../shared/meal-detail-api'
 import { addMenuItem, cancelParticipation, deleteMenuItem, getMyMenu, updateMenuItem } from './api'
 import { validateMenuInput } from './menu-input'
@@ -142,7 +142,7 @@ export default function MyMenuSection({ meal, userId, now, onChanged }: Props) {
             </form>
             {items.length === 0 ? <Text c="dimmed">아직 입력한 메뉴가 없습니다</Text> : (
               <Stack component="ul" gap="sm" p={0} m={0} style={{ listStyle: 'none' }}>
-                {items.map((item) => <Stack component="li" key={item.id} gap="xs">
+                {items.map((item) => <Stack component="li" key={item.id} gap="xs" p="sm" style={{ border: '1px solid var(--mantine-color-gray-3)', borderRadius: 'var(--mantine-radius-md)' }}>
                   {editingId === item.id ? (
                     <form onSubmit={(event) => { event.preventDefault(); void handleChangeMenu(item.id, false, Date.now()) }} noValidate>
                       <Stack gap="xs">
@@ -157,17 +157,19 @@ export default function MyMenuSection({ meal, userId, now, onChanged }: Props) {
                       </Stack>
                     </form>
                   ) : (
-                    <Group justify="space-between" align="flex-start">
-                      <Text style={{ flex: '1 1 160px', minWidth: 0, overflowWrap: 'anywhere' }}>{item.name}</Text>
-                      <Text>{item.price.toLocaleString('ko-KR')}원</Text>
-                      <Group gap="xs">
+                    <Flex direction={{ base: 'column', sm: 'row' }} align={{ base: 'stretch', sm: 'center' }} gap="sm">
+                      <Group wrap="nowrap" align="center" gap="sm" style={{ flex: 1, minWidth: 0 }}>
+                        <Text style={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>{item.name}</Text>
+                        <Text style={{ flexShrink: 0 }}>{item.price.toLocaleString('ko-KR')}원</Text>
+                      </Group>
+                      <Group gap="xs" wrap="nowrap" justify="flex-end" style={{ flexShrink: 0 }}>
                         <Button variant="outline" disabled={Boolean(locked) || saving} onClick={() => {
                           setEditingId(item.id); setEditName(item.name); setEditPrice(String(item.price))
                           setEditErrors({ nameError: null, priceError: null })
                         }}>수정</Button>
                         <Button color="red" variant="light" disabled={Boolean(locked) || saving} onClick={() => void handleChangeMenu(item.id, true, Date.now())}>삭제</Button>
                       </Group>
-                    </Group>
+                    </Flex>
                   )}
                 </Stack>)}
               </Stack>
