@@ -40,7 +40,12 @@ export default function MealInfoSection({ meal, onChanged }: Props) {
   // 상세를 보는 중 지나간 주문 예정 시간. 이 값과 같으면 겸상이 닫힌 것으로 본다
   const [passedOrderTime, setPassedOrderTime] = useState<string | null>(null)
   // Host 넘기기는 meal 섹션만 쓰는 데이터라 여기서 조회한다. null: 불러오는 중
-  const [loadedHandover, setLoadedHandover] = useState<{ error: string | null; handover: Handover | null } | null>(null)
+  // confirmed: 조회에 한 번이라도 성공해 대기 여부를 확인함. 실패하면 마지막으로 확인한 요청을 유지한다
+  const [loadedHandover, setLoadedHandover] = useState<{
+    error: string | null
+    handover: Handover | null
+    confirmed: boolean
+  } | null>(null)
   // 마지막으로 보낸 조회 번호. 조회가 겹치면 늦게 도착한 이전 응답이 최신 상태를 덮지 않게 한다
   const latestHandoverLoad = useRef(0)
   const orderTime = meal.orderTime
@@ -48,7 +53,12 @@ export default function MealInfoSection({ meal, onChanged }: Props) {
   const loadHandover = useCallback(async () => {
     const request = ++latestHandoverLoad.current
     const latest = await getLatestHandover(meal.id)
-    if (request === latestHandoverLoad.current) setLoadedHandover(latest)
+    if (request !== latestHandoverLoad.current) return
+    setLoadedHandover((prev) =>
+      latest.error
+        ? { error: latest.error, handover: prev?.handover ?? null, confirmed: prev?.confirmed ?? false }
+        : { error: null, handover: latest.handover, confirmed: true },
+    )
   }, [meal.id])
 
   // Host·상태·내 참여 여부가 바뀌어도 다시 조회한다. 수락으로 참여에서 빠진 기존 Host는
@@ -78,6 +88,8 @@ export default function MealInfoSection({ meal, onChanged }: Props) {
   const isHost = meal.isHost
   // 넘기기 정보를 처음 불러오기 전에는 대기 여부를 모르므로 Host 관리 동작을 보이지 않는다
   const canManage = isHost && isOpen && loadedHandover !== null
+  // 대기 여부를 확인하지 못했으면 대기 여부에 따라 달라지는 동작(시간 수정, Host 넘기기)을 막는다
+  const handoverConfirmed = loadedHandover?.confirmed === true
   const handover = loadedHandover?.handover ?? null
   const handoverPending = handover?.status === 'pending'
   // Host를 뺀 참여자 수. 넘기기 대상
@@ -160,11 +172,11 @@ export default function MealInfoSection({ meal, onChanged }: Props) {
               variant="default"
               size="md"
               onClick={() => setOrderTimeOpened(true)}
-              disabled={handoverPending}
+              disabled={handoverPending || !handoverConfirmed}
             >
               주문 예정 시간 수정
             </Button>
-            {!handoverPending && (
+            {handoverConfirmed && !handoverPending && (
               <Button
                 variant="default"
                 size="md"
@@ -183,7 +195,7 @@ export default function MealInfoSection({ meal, onChanged }: Props) {
               Host 넘기기 대기 중에는 주문 예정 시간을 수정할 수 없습니다.
             </Text>
           )}
-          {!handoverPending && otherMemberCount < 1 && (
+          {handoverConfirmed && !handoverPending && otherMemberCount < 1 && (
             <Text size="sm" c="dimmed">
               다른 참여자가 없으면 Host를 넘길 수 없습니다. 겸상 취소를 이용해 주세요.
             </Text>

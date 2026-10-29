@@ -19,6 +19,8 @@ export default function MealHandoverResponse({ handover, rejected, isOpen, onCha
   const [loading, setLoading] = useState<'accept' | 'reject' | null>(null)
   // 이미 닫힌 요청이라 응답 버튼을 숨김
   const [closed, setClosed] = useState(false)
+  // 응답에 성공함. 부모의 재조회가 끝나기 전에도 다시 응답하지 못하게 한다
+  const [responded, setResponded] = useState<'accept' | 'reject' | null>(null)
 
   async function respond(kind: 'accept' | 'reject') {
     setLoading(kind)
@@ -31,6 +33,7 @@ export default function MealHandoverResponse({ handover, rejected, isOpen, onCha
       setClosed(result.closed)
       return
     }
+    setResponded(kind)
     onChanged()
   }
 
@@ -42,11 +45,12 @@ export default function MealHandoverResponse({ handover, rejected, isOpen, onCha
         <Text size="sm" c="dimmed">
           수락하면 이 겸상의 Host가 됩니다. 주문 예정 시간까지 아무도 수락하지 않거나 모두 거절하면 겸상이 취소됩니다.
         </Text>
-        {rejected ? (
+        {rejected || responded === 'reject' ? (
           <Text role="status">거절했습니다.</Text>
         ) : (
           isOpen &&
-          !closed && (
+          !closed &&
+          responded === null && (
             <Group>
               <Button size="md" onClick={() => setConfirmOpened(true)} disabled={loading !== null}>
                 수락
