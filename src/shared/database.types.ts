@@ -148,8 +148,8 @@ export type Database = {
           memo: string | null
           menu_url: string | null
           order_time: string
-          place: string | null
-          restaurant_name: string | null
+          place: string
+          restaurant_name: string
           status: Database["public"]["Enums"]["meal_status"]
           title: string
           type: Database["public"]["Enums"]["meal_type"]
@@ -163,8 +163,8 @@ export type Database = {
           memo?: string | null
           menu_url?: string | null
           order_time: string
-          place?: string | null
-          restaurant_name?: string | null
+          place: string
+          restaurant_name: string
           status?: Database["public"]["Enums"]["meal_status"]
           title: string
           type: Database["public"]["Enums"]["meal_type"]
@@ -178,8 +178,8 @@ export type Database = {
           memo?: string | null
           menu_url?: string | null
           order_time?: string
-          place?: string | null
-          restaurant_name?: string | null
+          place?: string
+          restaurant_name?: string
           status?: Database["public"]["Enums"]["meal_status"]
           title?: string
           type?: Database["public"]["Enums"]["meal_type"]
