@@ -32,7 +32,10 @@ export function subscribeNotices(mealId: string, onChange: () => void): () => vo
   const channel = supabase
     .channel(`notices:${mealId}:${crypto.randomUUID()}`)
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notices', filter: `meal_id=eq.${mealId}` }, onChange)
-    .subscribe()
+    // 연결 전이나 끊긴 동안의 변경은 이벤트로 오지 않으므로, 연결(재연결 포함)될 때마다 다시 조회한다
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') onChange()
+    })
   return () => {
     void supabase.removeChannel(channel)
   }

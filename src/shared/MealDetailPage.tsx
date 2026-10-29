@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Center, Loader, Stack, Text } from '@mantine/core'
 import { useOutletContext, useParams } from 'react-router'
 import MealInfoSection from '../features/meal/MealInfoSection'
@@ -23,19 +23,18 @@ function MealDetailContent({ mealId, userId }: { mealId: string; userId: string 
   // null: 불러오는 중
   const [result, setResult] = useState<MealDetailResult | null>(null)
 
+  // 마지막으로 보낸 조회 번호. 조회가 겹치면 늦게 도착한 이전 응답이 최신 상태를 덮지 않게 한다
+  const latestRequest = useRef(0)
+
   const reload = useCallback(async () => {
-    setResult(await getMealDetail(mealId, userId))
+    const request = ++latestRequest.current
+    const next = await getMealDetail(mealId, userId)
+    if (request === latestRequest.current) setResult(next)
   }, [mealId, userId])
 
   useEffect(() => {
-    let ignore = false
-    getMealDetail(mealId, userId).then((next) => {
-      if (!ignore) setResult(next)
-    })
-    return () => {
-      ignore = true
-    }
-  }, [mealId, userId])
+    void reload()
+  }, [reload])
 
   // 다른 사용자의 참여·취소, 상태 전환을 새로 고침 없이 반영한다(#81)
   useEffect(() => subscribeMealDetail(mealId, () => void reload()), [mealId, reload])
