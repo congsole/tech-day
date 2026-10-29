@@ -29,6 +29,8 @@ export default function MyMenuSection({ meal, userId, now, onChanged }: Props) {
   const inFlight = useRef(false)
   const nameInput = useRef<HTMLInputElement>(null)
   const priceInput = useRef<HTMLInputElement>(null)
+  const editNameInput = useRef<HTMLInputElement>(null)
+  const editPriceInput = useRef<HTMLInputElement>(null)
   const focusAfterSave = useRef(false)
 
   useEffect(() => {
@@ -86,14 +88,18 @@ export default function MyMenuSection({ meal, userId, now, onChanged }: Props) {
     if (!remove) {
       const input = validateMenuInput(editName, editPrice)
       setEditErrors(input)
-      if (input.nameError || input.priceError) return
+      if (input.nameError || input.priceError) {
+        const invalidInput = input.nameError ? editNameInput : editPriceInput
+        invalidInput.current?.focus()
+        return
+      }
     }
     inFlight.current = true
     setSaving(true)
     setActionError(null)
     const changed = remove ? await deleteMenuItem(meal.id, userId, itemId)
       : await updateMenuItem(meal.id, userId, itemId, editName, editPrice)
-    if (!changed.error) setEditingId(null)
+    if (!changed.error && itemId === editingId) setEditingId(null)
     setActionError(changed.error)
     setResult(null)
     await onChanged()
@@ -146,9 +152,9 @@ export default function MyMenuSection({ meal, userId, now, onChanged }: Props) {
                   {editingId === item.id ? (
                     <form onSubmit={(event) => { event.preventDefault(); void handleChangeMenu(item.id, false, Date.now()) }} noValidate>
                       <Stack gap="xs">
-                        <TextInput label="수정 메뉴명" value={editName} onChange={(event) => setEditName(event.currentTarget.value)}
+                        <TextInput ref={editNameInput} label="수정 메뉴명" value={editName} onChange={(event) => setEditName(event.currentTarget.value)}
                           error={editErrors.nameError} disabled={Boolean(locked) || saving} autoFocus />
-                        <TextInput label="수정 금액 (원)" inputMode="decimal" value={editPrice} onChange={(event) => setEditPrice(event.currentTarget.value)}
+                        <TextInput ref={editPriceInput} label="수정 금액 (원)" inputMode="decimal" value={editPrice} onChange={(event) => setEditPrice(event.currentTarget.value)}
                           error={editErrors.priceError} disabled={Boolean(locked) || saving} />
                         <Group>
                           <Button type="submit" disabled={Boolean(locked) || saving}>저장</Button>
