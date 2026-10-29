@@ -5,6 +5,48 @@ import { validateMenuInput } from './menu-input'
 type Result<T> = { data: T; error: null } | { data: null; error: string }
 export type MenuItem = Pick<Database['public']['Tables']['order_items']['Row'], 'id' | 'name' | 'price'>
 
+export type MemberSummary = {
+  userId: Database['public']['Tables']['meal_members']['Row']['user_id']
+  displayName: Database['public']['Tables']['profiles']['Row']['display_name']
+  email: Database['public']['Functions']['get_meal_member_emails']['Returns'][number]['email']
+  confirmedAt: Database['public']['Tables']['meal_members']['Row']['confirmed_at']
+  items: MenuItem[]
+  amountDue: number
+}
+
+// SCR-JOIN-03: 이메일은 Host 전용 RPC로만 조회한다. 일부 실패를 빈 메뉴·0원으로 표시하지 않는다.
+export async function getMemberSummary(mealId: string): Promise<Result<MemberSummary[]>> {
+  const loadError = '취합 현황을 불러오지 못했습니다. 새로 고침해 주세요.'
+  try {
+    const [members, emails] = await Promise.all([
+      supabase.from('meal_members')
+        .select('user_id, confirmed_at, profiles(display_name), order_items(id, name, price)')
+        .eq('meal_id', mealId).order('joined_at').order('user_id'),
+      supabase.rpc('get_meal_member_emails', { p_meal_id: mealId }),
+    ])
+    if (emails.error?.message === 'not_host') return { data: null, error: 'Host만 취합 현황을 볼 수 있습니다.' }
+    if (members.error || emails.error || !members.data || !emails.data) return { data: null, error: loadError }
+    const emailByUser = new Map(emails.data.map((member) => [member.user_id, member.email]))
+    const data: MemberSummary[] = []
+    for (const member of members.data) {
+      const email = emailByUser.get(member.user_id)
+      // 조회 사이 참여자가 바뀌어 정보가 누락된 경우에도 완전한 현황으로 표시하지 않는다.
+      if (!email || !member.profiles || !member.order_items) return { data: null, error: loadError }
+      data.push({
+        userId: member.user_id,
+        displayName: member.profiles.display_name,
+        email,
+        confirmedAt: member.confirmed_at,
+        items: member.order_items,
+        amountDue: member.order_items.reduce((total, item) => total + item.price, 0),
+      })
+    }
+    return { data, error: null }
+  } catch {
+    return { data: null, error: loadError }
+  }
+}
+
 export async function getMyMenu(mealId: string, userId: string): Promise<Result<MenuItem[]>> {
   try {
     const { data, error } = await supabase.from('order_items').select('id, name, price')
