@@ -156,3 +156,24 @@ export async function confirmOrder(mealId: string): Promise<{ error: string | nu
     return { error: '주문 확정 결과를 확인하지 못했습니다. 새로 고침해 확정 상태를 확인해 주세요.' }
   }
 }
+
+// 이 겸상의 메뉴 항목 변경을 알린다(#101). 수신하면 getMemberSummary로 다시 조회한다.
+// 반환 함수로 구독을 해제한다. docs/common/db-schema.md §10
+export function subscribeOrderItems(mealId: string, isShown: (itemId: string) => boolean, onChange: () => void): () => void {
+  // 같은 이름의 채널은 재사용되므로, 해제 중인 채널을 다시 받지 않도록 구독마다 이름을 새로 만든다
+  const channel = supabase
+    .channel(`order-items:${mealId}:${crypto.randomUUID()}`)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'order_items', filter: `meal_id=eq.${mealId}` }, onChange)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'order_items', filter: `meal_id=eq.${mealId}` }, onChange)
+    // 삭제 이벤트는 필터를 쓸 수 없고 이전 행에 id만 담기므로, 표시 중인 메뉴 항목인지 확인한다
+    .on<{ id: string }>('postgres_changes', { event: 'DELETE', schema: 'public', table: 'order_items' }, (payload) => {
+      if (payload.old.id && isShown(payload.old.id)) onChange()
+    })
+    // 연결 전이나 끊긴 동안의 변경은 이벤트로 오지 않으므로, 연결(재연결 포함)될 때마다 다시 조회한다
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') onChange()
+    })
+  return () => {
+    void supabase.removeChannel(channel)
+  }
+}
