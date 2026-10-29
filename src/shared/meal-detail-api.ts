@@ -14,6 +14,7 @@ export type MealDetail = {
   cancelReason: string | null
   restaurantName: string | null
   menuUrl: string | null
+  place: string
   orderTime: string
   capacity: number
   memo: string | null
@@ -34,7 +35,7 @@ export async function getMealDetail(mealId: string, userId: string): Promise<Mea
     const [meal, member] = await Promise.all([
       supabase
         .from('meals')
-        .select('id, host_id, title, type, status, cancel_reason, restaurant_name, menu_url, order_time, capacity, memo, meal_members(count)')
+        .select('id, host_id, title, type, status, cancel_reason, restaurant_name, menu_url, place, order_time, capacity, memo, meal_members(count)')
         .eq('id', mealId)
         .maybeSingle(),
       supabase.from('meal_members').select('user_id, confirmed_at').eq('meal_id', mealId).eq('user_id', userId).maybeSingle(),
@@ -55,6 +56,7 @@ export async function getMealDetail(mealId: string, userId: string): Promise<Mea
         cancelReason: meal.data.cancel_reason,
         restaurantName: meal.data.restaurant_name,
         menuUrl: meal.data.menu_url,
+        place: meal.data.place,
         orderTime: meal.data.order_time,
         capacity: meal.data.capacity,
         memo: meal.data.memo,

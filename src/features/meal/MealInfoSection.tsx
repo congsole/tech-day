@@ -4,6 +4,7 @@ import type { MealDetail } from '../../shared/meal-detail-api'
 import { MEAL_STATUS_LABEL, MEAL_TYPE_LABEL } from './labels'
 import MealCancelModal from './MealCancelModal'
 import MealOrderTimeModal from './MealOrderTimeModal'
+import PlaceItem from '../notice/PlaceItem'
 
 const orderTimeFormat = new Intl.DateTimeFormat('ko-KR', {
   month: 'long',
@@ -17,7 +18,7 @@ const orderTimeFormat = new Intl.DateTimeFormat('ko-KR', {
 const MAX_TIMEOUT = 2 ** 31 - 1
 
 // 겸상 상세의 meal 섹션. 겸상 정보(REQ-MEAL-03)와 Host 관리 동작(REQ-MEAL-05~07)
-// 집합/수령 장소 항목은 이 섹션 안에 들어온다(SCR-MEAL-INFO). 표시·수정 UI는 REQ-NOTICE-02 구현 후 붙인다.
+// 집합/수령 장소 항목은 이 섹션 안에 들어온다(SCR-MEAL-INFO). 표시·수정 UI는 notice의 PlaceItem(REQ-NOTICE-02)
 type Props = {
   meal: MealDetail
   // 겸상 정보는 공유 데이터라 부모(MealDetailPage)가 다시 조회한다(#75)
@@ -65,6 +66,7 @@ export default function MealInfoSection({ meal, onChanged }: Props) {
           <Title order={1}>{meal.title}</Title>
           <Stack gap={4}>
             {meal.restaurantName && <Text>{meal.restaurantName}</Text>}
+            <PlaceItem meal={meal} onChanged={onChanged} />
             {meal.menuUrl && (
               <Anchor href={meal.menuUrl} target="_blank" rel="noopener noreferrer">
                 가게 메뉴판 보기
