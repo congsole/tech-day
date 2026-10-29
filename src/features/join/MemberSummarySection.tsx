@@ -1,26 +1,38 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Alert, Badge, Card, Group, Loader, Stack, Text, Title } from '@mantine/core'
 import type { MealDetail } from '../../shared/meal-detail-api'
-import { getMemberSummary } from './api'
+import { getMemberSummary, subscribeOrderItems } from './api'
 
-// REQ-JOIN-05 / SCR-JOIN-03. 부모의 공유 데이터 재조회마다 현황도 갱신한다.
+// REQ-JOIN-05 / SCR-JOIN-03. 부모의 공유 데이터 재조회마다, 메뉴 항목이 바뀔 때마다(#101) 현황을 갱신한다.
 export default function MemberSummarySection({ meal }: { meal: MealDetail }) {
-  const [loaded, setLoaded] = useState<{
-    meal: MealDetail
-    result: Awaited<ReturnType<typeof getMemberSummary>>
-  } | null>(null)
+  // null: 최초 조회 중. 다시 조회하는 동안에는 이전 현황을 유지한다
+  const [result, setResult] = useState<Awaited<ReturnType<typeof getMemberSummary>> | null>(null)
+  // 마지막으로 보낸 조회 번호. 조회가 겹치면 늦게 도착한 이전 응답이 최신 현황을 덮지 않게 한다
+  const latestLoad = useRef(0)
+  // 표시 중인 메뉴 항목 id. 삭제 이벤트가 이 겸상의 것인지 확인한다
+  const shownItemIds = useRef(new Set<string>())
+  const mealId = meal.id
+
+  const load = useCallback(async () => {
+    const request = ++latestLoad.current
+    const next = await getMemberSummary(mealId)
+    if (request !== latestLoad.current) return
+    shownItemIds.current = new Set(next.data?.flatMap((member) => member.items.map((item) => item.id)) ?? [])
+    setResult(next)
+  }, [mealId])
+
+  // 참여·취소·확정은 부모가 다시 조회해 새 meal을 내려주므로 그때마다 다시 조회한다
+  useEffect(() => {
+    if (!meal.isHost) return
+    void load()
+  }, [meal, load])
 
   useEffect(() => {
     if (!meal.isHost) return
-    let ignore = false
-    getMemberSummary(meal.id).then((result) => {
-      if (!ignore) setLoaded({ meal, result })
-    })
-    return () => { ignore = true }
-  }, [meal])
+    return subscribeOrderItems(mealId, (itemId) => shownItemIds.current.has(itemId), () => void load())
+  }, [mealId, meal.isHost, load])
 
   if (!meal.isHost) return null
-  const result = loaded?.meal === meal ? loaded.result : null
   return (
     <Card p="lg" bg="white">
       <Stack gap="sm">
