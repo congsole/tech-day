@@ -25,6 +25,15 @@ export async function createNotice(mealId: string, content: string): Promise<Res
   return { error: '공지를 올리지 못했습니다.' }
 }
 
+// Host가 모집중일 때만 수정할 수 있다(RLS). 막히면 오류 없이 0행이 되므로 반영된 행으로 판단한다. REQ-NOTICE-02
+export async function updatePlace(mealId: string, place: string): Promise<Result<null>> {
+  const { data, error } = await supabase.from('meals').update({ place: place.trim() }).eq('id', mealId).select('id')
+  if (error?.code === '23514') return { error: '장소를 입력하세요.' }
+  if (error) return { error: '장소를 저장하지 못했습니다.' }
+  if (data.length !== 1) return { error: '모집중일 때만 장소를 수정할 수 있습니다.' }
+  return { data: null }
+}
+
 // 이 겸상에 공지가 올라오면 알린다(#81). 수신하면 getNotices로 다시 조회한다.
 // 참여자에게만 전달된다(RLS). 반환 함수로 구독을 해제한다. docs/common/db-schema.md §10
 export function subscribeNotices(mealId: string, onChange: () => void): () => void {
