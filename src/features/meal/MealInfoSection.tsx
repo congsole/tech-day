@@ -120,7 +120,7 @@ export default function MealInfoSection({ meal, onChanged }: Props) {
           )}
           <Title order={1}>{meal.title}</Title>
           <Stack gap={4}>
-            {meal.restaurantName && <Text>{meal.restaurantName}</Text>}
+            <Text>{meal.restaurantName}</Text>
             <PlaceItem meal={meal} onChanged={onChanged} />
             {meal.menuUrl && (
               <Anchor href={meal.menuUrl} target="_blank" rel="noopener noreferrer">
