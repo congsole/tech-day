@@ -197,3 +197,107 @@ export async function updateOrderTime(mealId: string, orderTime: Date): Promise<
       return { error: '주문 예정 시간을 수정하지 못했습니다. 다시 시도해 주세요.' }
   }
 }
+
+export type Handover = {
+  id: string
+  fromHostId: string
+  reason: string
+  status: Database['public']['Enums']['handover_status']
+  rejectedUserIds: string[]
+}
+
+// REQ-MEAL-05·08·09: 겸상의 가장 최근 Host 넘기기 요청. RLS로 그 겸상의 Host와 참여자만 조회된다.
+export async function getLatestHandover(mealId: string): Promise<ApiResult & { handover: Handover | null }> {
+  const { data, error } = await supabase
+    .from('host_handovers')
+    .select('id, from_host_id, reason, status, host_handover_rejections(user_id)')
+    .eq('meal_id', mealId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) return { error: 'Host 넘기기 정보를 불러오지 못했습니다. 새로 고침해 주세요.', handover: null }
+  if (!data) return { error: null, handover: null }
+  return {
+    error: null,
+    handover: {
+      id: data.id,
+      fromHostId: data.from_host_id,
+      reason: data.reason,
+      status: data.status,
+      rejectedUserIds: data.host_handover_rejections.map((rejection) => rejection.user_id),
+    },
+  }
+}
+
+// 이 겸상의 Host 넘기기 요청·상태 변경과, 대기 중인 요청의 거절을 알린다(#81). 수신하면 getLatestHandover로 다시 조회한다.
+// 그 겸상의 Host와 참여자에게만 전달된다(RLS). 반환 함수로 구독을 해제한다. docs/common/db-schema.md §10
+export function subscribeHandover(mealId: string, pendingHandoverId: string | null, onChange: () => void): () => void {
+  // 같은 이름의 채널은 재사용되므로, 해제 중인 채널을 다시 받지 않도록 구독마다 이름을 새로 만든다
+  let channel = supabase
+    .channel(`meal-handover:${mealId}:${crypto.randomUUID()}`)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'host_handovers', filter: `meal_id=eq.${mealId}` }, onChange)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'host_handovers', filter: `meal_id=eq.${mealId}` }, onChange)
+  // 거절 행에는 겸상 ID가 없어 대기 중인 요청 ID로 거른다
+  if (pendingHandoverId) {
+    channel = channel.on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'host_handover_rejections', filter: `handover_id=eq.${pendingHandoverId}` },
+      onChange,
+    )
+  }
+  // 연결 전이나 끊긴 동안의 변경은 이벤트로 오지 않으므로, 연결(재연결 포함)될 때마다 다시 조회한다
+  channel.subscribe((status) => {
+    if (status === 'SUBSCRIBED') onChange()
+  })
+  return () => {
+    void supabase.removeChannel(channel)
+  }
+}
+
+// REQ-MEAL-05: Host 넘기기 요청. Host·열려 있음·대기 중 여부·다른 참여자 확인은 request_host_handover RPC가 한다.
+export async function requestHandover(mealId: string, reason: string): Promise<ApiResult> {
+  const { error } = await supabase.rpc('request_host_handover', { p_meal_id: mealId, p_reason: reason })
+  if (!error) return { error: null }
+  switch (error.message) {
+    case 'no_other_members':
+      return { error: '다른 참여자가 없으면 Host를 넘길 수 없습니다. 겸상 취소를 이용해 주세요.' }
+    case 'handover_pending':
+      return { error: '이미 Host 넘기기를 요청했습니다.' }
+    case 'meal_not_recruiting':
+      return { error: '모집중일 때만 Host를 넘길 수 있습니다.' }
+    case 'not_host':
+      return { error: 'Host만 Host를 넘길 수 있습니다.' }
+    default:
+      return { error: 'Host 넘기기를 요청하지 못했습니다. 다시 시도해 주세요.' }
+  }
+}
+
+// closed: 요청이 이미 닫혀 더 응답할 수 없음
+type HandoverResponseResult = ApiResult & { closed: boolean }
+
+function handoverResponseError(message: string, fallback: string): HandoverResponseResult {
+  switch (message) {
+    case 'handover_not_pending':
+      return { error: '이미 처리된 요청입니다. 새로 고침해 주세요.', closed: true }
+    case 'handover_expired':
+      return { error: '주문 예정 시간이 지나 수락할 수 없습니다.', closed: true }
+    case 'not_member':
+      return { error: '참여자만 응답할 수 있습니다.', closed: true }
+    default:
+      return { error: fallback, closed: false }
+  }
+}
+
+// REQ-MEAL-08: Host 넘기기 수락. 수락하면 호출자가 새 Host가 되고 기존 Host의 참여·메뉴가 삭제된다.
+export async function acceptHandover(handoverId: string): Promise<HandoverResponseResult> {
+  const { error } = await supabase.rpc('accept_host_handover', { p_handover_id: handoverId })
+  if (!error) return { error: null, closed: false }
+  return handoverResponseError(error.message, 'Host 넘기기를 수락하지 못했습니다. 다시 시도해 주세요.')
+}
+
+// REQ-MEAL-09: Host 넘기기 거절. 전원 거절이면 reject_host_handover RPC가 겸상을 취소한다.
+export async function rejectHandover(handoverId: string): Promise<HandoverResponseResult> {
+  const { error } = await supabase.rpc('reject_host_handover', { p_handover_id: handoverId })
+  if (!error) return { error: null, closed: false }
+  return handoverResponseError(error.message, 'Host 넘기기를 거절하지 못했습니다. 다시 시도해 주세요.')
+}
