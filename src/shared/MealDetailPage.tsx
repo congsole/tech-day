@@ -56,7 +56,7 @@ function MealDetailContent({ mealId, userId }: { mealId: string; userId: string 
       <NoticeSection meal={meal} />
       <MealInfoSection meal={meal} onChanged={reload} />
       <JoinSection meal={meal} onChanged={reload} />
-      <SettleSection />
+      <SettleSection meal={meal} onChanged={reload} />
     </Stack>
   )
 }
