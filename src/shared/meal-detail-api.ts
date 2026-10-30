@@ -12,7 +12,7 @@ export type MealDetail = {
   type: Meal['type']
   status: Meal['status']
   cancelReason: string | null
-  restaurantName: string | null
+  restaurantName: string
   menuUrl: string | null
   place: string
   orderTime: string
