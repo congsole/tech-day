@@ -9,7 +9,7 @@
 ## 프로젝트
 - 개요: 사내 직원이 같이 식사·배달할 사람을 모으고 메뉴 취합부터 정산까지 하는 반응형 웹앱
 - 기술 스택: TypeScript, React + Vite, React Router / Supabase 무료 플랜 / npm, ESLint
-- 배포: Vercel 무료 플랜 (GitHub 연동 자동 배포)
+- 배포: Vercel 무료 플랜 (GitHub 연동 자동 배포. `main`이 운영, 그 밖의 브랜치와 PR은 미리보기)
 - 명령어: 설치 `npm install` / 실행 `npm run dev` / 빌드 `npm run build` / 린트 `npm run lint`
 - 환경 변수: `.env.example`을 `.env.local`로 복사해 값을 채운다. `.env.local`은 커밋하지 않는다.
 
@@ -103,6 +103,7 @@
 
 ## 브랜치와 PR
 - 모든 브랜치는 `dev`에서 따고, PR은 `dev`로 보낸다. `main`에서 작업하지 않는다.
+- 운영 배포는 `dev`에서 `main`으로 보내는 배포 PR로만 한다. 배포 PR도 아래 승인 기준을 따른다.
 - 문서 작업은 `docs/<기능>`, 구현은 `feature/<기능>` 브랜치에서 한다.
 - `docs/` 브랜치에서는 코드를 수정하지 않는다.
 - 구현 중 필요한 작은 문서 수정은 같은 feature PR에 포함한다.
