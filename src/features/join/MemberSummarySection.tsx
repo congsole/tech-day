@@ -11,12 +11,16 @@ export default function MemberSummarySection({ meal }: { meal: MealDetail }) {
   const latestLoad = useRef(0)
   // 표시 중인 메뉴 항목 id. 삭제 이벤트가 이 겸상의 것인지 확인한다
   const shownItemIds = useRef(new Set<string>())
+  // 조회 진행 중 여부. 조회 중 삭제된 메뉴는 아직 표시 전이라 id로 판별할 수 없으므로 다시 조회한다
+  const loading = useRef(false)
   const mealId = meal.id
 
   const load = useCallback(async () => {
     const request = ++latestLoad.current
+    loading.current = true
     const next = await getMemberSummary(mealId)
     if (request !== latestLoad.current) return
+    loading.current = false
     shownItemIds.current = new Set(next.data?.flatMap((member) => member.items.map((item) => item.id)) ?? [])
     setResult(next)
   }, [mealId])
@@ -29,7 +33,7 @@ export default function MemberSummarySection({ meal }: { meal: MealDetail }) {
 
   useEffect(() => {
     if (!meal.isHost) return
-    return subscribeOrderItems(mealId, (itemId) => shownItemIds.current.has(itemId), () => void load())
+    return subscribeOrderItems(mealId, (itemId) => loading.current || shownItemIds.current.has(itemId), () => void load())
   }, [mealId, meal.isHost, load])
 
   if (!meal.isHost) return null
