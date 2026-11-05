@@ -7,8 +7,13 @@ function syncPresentation() {
   const slide = Reveal.getCurrentSlide();
   if (!slide) return;
   const index = Reveal.getIndices().h;
-  const evidenceSlide = document.getElementById('slide-8');
+  const evidenceSlide = document.getElementById('slide-15');
   evidenceSlide.classList.toggle('has-evidence', Boolean(evidenceSlide.querySelector('.evidence.visible')));
+  const mergeSlide = document.getElementById('slide-18');
+  mergeSlide.classList.toggle('has-incident', Boolean(mergeSlide.querySelector('.incident.visible')));
+  const retroSlide = document.getElementById('slide-20');
+  retroSlide.classList.toggle('has-haesol', Boolean(retroSlide.querySelector('.haesol.visible')));
+  retroSlide.classList.toggle('has-question', Boolean(retroSlide.querySelector('.retro-question.visible')));
   document.getElementById('position').textContent = `${String(index + 1).padStart(2, '0')} / ${slides.length}`;
   const fragments = [...slide.querySelectorAll('.fragment')];
   document.getElementById('previous').disabled = index === 0 && !fragments.some(item => item.classList.contains('visible'));
@@ -33,7 +38,7 @@ function openNotes() {
   const total = Reveal.getSlides().reduce((sum, slide) => sum + Number(slide.dataset.timing), 0);
   speakerWindow.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>겸상 · 발표자 노트</title><style>
   body{font:20px/1.7 sans-serif;background:#f3f0e7;color:#242522;margin:30px}h1{font-size:27px;line-height:1.4;color:#bd4021}li{margin-bottom:16px}button{font:inherit;padding:8px 18px;margin-right:12px}a{color:#984026}#upcoming{border-top:1px solid #aaa;padding-top:16px}.meta{font-size:16px;color:#65695f}code{font-size:.9em}
-  </style></head><body><h1 id="heading"></h1><p class="meta">본편 ${formatTime(total)} + 현장 여유 30초 · ← / → / Space로 제어</p><p id="timing"></p><p id="step" class="meta"></p><button id="prev">← 이전</button><button id="advance">다음 →</button><div id="notes"></div><p id="upcoming"></p></body></html>`);
+  </style></head><body><h1 id="heading"></h1><p class="meta">본편 ${formatTime(total)} + 현장 여유 40초 · ← / → / Space로 제어</p><p id="timing"></p><p id="step" class="meta"></p><button id="prev">← 이전</button><button id="advance">다음 →</button><div id="notes"></div><p id="upcoming"></p></body></html>`);
   speakerWindow.document.close();
   speakerWindow.document.getElementById('prev').onclick = () => Reveal.prev();
   speakerWindow.document.getElementById('advance').onclick = () => Reveal.next();
