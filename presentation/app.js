@@ -7,11 +7,9 @@ function syncPresentation() {
   const slide = Reveal.getCurrentSlide();
   if (!slide) return;
   const index = Reveal.getIndices().h;
-  const evidenceSlide = document.getElementById('slide-15');
+  const evidenceSlide = document.getElementById('slide-16');
   evidenceSlide.classList.toggle('has-evidence', Boolean(evidenceSlide.querySelector('.evidence.visible')));
-  const mergeSlide = document.getElementById('slide-18');
-  mergeSlide.classList.toggle('has-incident', Boolean(mergeSlide.querySelector('.incident.visible')));
-  const retroSlide = document.getElementById('slide-20');
+  const retroSlide = document.getElementById('slide-21');
   retroSlide.classList.toggle('has-haesol', Boolean(retroSlide.querySelector('.haesol.visible')));
   retroSlide.classList.toggle('has-question', Boolean(retroSlide.querySelector('.retro-question.visible')));
   document.getElementById('position').textContent = `${String(index + 1).padStart(2, '0')} / ${slides.length}`;
