@@ -9,9 +9,6 @@ function syncPresentation() {
   const index = Reveal.getIndices().h;
   const evidenceSlide = document.getElementById('slide-16');
   evidenceSlide.classList.toggle('has-evidence', Boolean(evidenceSlide.querySelector('.evidence.visible')));
-  const retroSlide = document.getElementById('slide-21');
-  retroSlide.classList.toggle('has-haesol', Boolean(retroSlide.querySelector('.haesol.visible')));
-  retroSlide.classList.toggle('has-question', Boolean(retroSlide.querySelector('.retro-question.visible')));
   document.getElementById('position').textContent = `${String(index + 1).padStart(2, '0')} / ${slides.length}`;
   const fragments = [...slide.querySelectorAll('.fragment')];
   document.getElementById('previous').disabled = index === 0 && !fragments.some(item => item.classList.contains('visible'));
@@ -47,7 +44,7 @@ function syncPresentation() {
     if (stage === 0) notes.scrollTop = 0;
     else notes.scrollTop += activeStep.getBoundingClientRect().top - notes.getBoundingClientRect().top - 12;
   }
-  doc.getElementById('upcoming').textContent = slides[index + 1] ? `다음: ${slides[index + 1].dataset.title}` : '마지막 장 · 질문을 남기고 감사 인사';
+  doc.getElementById('upcoming').textContent = slides[index + 1] ? `다음: ${slides[index + 1].dataset.title}` : '마지막 장 · 감사 인사';
   doc.getElementById('prev').disabled = document.getElementById('previous').disabled;
   doc.getElementById('advance').disabled = document.getElementById('next').disabled;
 }
