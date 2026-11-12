@@ -1,0 +1,57 @@
+#ep02 { --dim:#afbac9; --green:#9de5b4; }
+#ep02 [hidden] { display:none !important; }
+#ep02 .scene-marker { display:none; }
+#ep02 .episode-heading { display:flex; align-items:baseline; gap:22px; height:77px; }
+#ep02 .episode-heading > span { font:700 20px monospace; color:var(--accent); }
+#ep02 .episode-heading h2 { font-size:42px; letter-spacing:-2px; }
+#ep02 .episode-heading .scene-count { margin-left:auto; color:var(--muted); }
+#ep02 .episode-screen { position:relative; height:calc(100% - 77px); overflow:hidden; border-radius:24px; background:#161b22; color:#edf2f8; }
+#ep02 .tool-bar { padding:18px 36px; background:#202731; color:var(--dim); font:20px/1.3 monospace; }
+#ep02 .tool-bar b { color:#fbfcfd; }
+#ep02 .tool-bar span { margin:0 12px; color:#83919e; }
+#ep02 .pr-title { padding:20px 36px; font-size:36px; font-weight:700; }
+#ep02 .pr-title span { color:var(--dim); font-weight:400; }
+#ep02 .review { margin:0 36px; padding:18px 24px; border:1px solid #41674e; border-radius:12px; background:#1d3028; }
+#ep02 .review strong { color:var(--green); font:700 46px/1.2 monospace; }
+#ep02 .review p { display:inline-block; margin-left:36px; font:21px monospace; }
+#ep02 .merge-action { margin:18px 36px; }
+#ep02 .merge-action b { display:inline-block; padding:10px 20px; background:#307744; border-radius:8px; font:700 22px monospace; }
+#ep02 .conversation { margin:18px 36px; }
+#ep02 .thread-label { margin-bottom:8px; color:var(--dim); font:19px monospace; }
+#ep02 .comment { padding:12px 20px; border:1px solid #48515c; border-radius:10px; background:#202731; }
+#ep02 .comment small, #ep02 .chat small { display:block; margin-bottom:5px; color:var(--dim); font-size:19px; }
+#ep02 .comment p { font-size:25px; }
+#ep02 .comment strong { font-weight:inherit; }
+#ep02 .ai-bar { background:#2d2839; }
+#ep02 .chat { padding:40px 60px; }
+#ep02 .chat > div { width:fit-content; max-width:75%; padding:20px 26px; border-radius:18px; font-size:33px; line-height:1.45; word-break:keep-all; }
+#ep02 .question { margin-left:auto; background:#313b48; }
+#ep02 .answer { margin-top:28px; border-left:4px solid #b3a0e3; background:#2b2637; animation:ep02-in .18s backwards; }
+#ep02 .success { position:absolute; inset:175px 0 auto; text-align:center; }
+#ep02 .success b { display:inline-block; padding:9px 18px; background:#624486; border-radius:24px; font:24px monospace; }
+#ep02 .success strong { display:block; margin:22px 0; font:700 43px monospace; }
+#ep02 .success p, #ep02 .afterthought { font-size:23px; color:var(--dim); }
+#ep02[data-scene="4"] .merge-action { position:relative; z-index:1; text-align:center; margin-top:62px; animation:ep02-click .7s .35s forwards; }
+#ep02[data-scene="4"] .success { animation:ep02-in .35s 1.05s backwards; }
+#ep02[data-scene="6"] .comment { margin-top:12px; padding:19px 24px; animation:ep02-highlight .9s; }
+#ep02[data-scene="6"] .followup { animation-delay:.75s; }
+#ep02[data-scene="6"] .comment p { font-size:32px; }
+#ep02[data-scene="7"] .conversation, #ep02 .ending { position:absolute; inset:0; margin:0; display:grid; align-content:center; justify-items:center; background:#0a0c10; }
+#ep02[data-scene="7"] .thread-label, #ep02[data-scene="7"] .original :is(small,.prefix,.punctuation) { display:none; }
+#ep02[data-scene="7"] .original { background:none; border:0; animation:ep02-zoom .3s ease-out; }
+#ep02[data-scene="7"] .original p { font-size:84px; font-weight:800; letter-spacing:-4px; }
+#ep02 .afterthought { animation:ep02-in .22s 1.3s backwards; }
+#ep02 .ending { gap:15px; background:#08090b; }
+#ep02 .ending p { font-size:56px; font-weight:700; letter-spacing:-2px; }
+#ep02 .ending p + p { animation:ep02-in .2s .9s backwards; }
+#ep02 .ending small { margin-top:20px; color:var(--dim); font-size:24px; animation:ep02-in .2s 2s backwards; }
+#ep02 .ai-aside { margin-top:6px; padding:12px 22px; border-radius:3px 17px 17px; background:#2b2637; color:#e0dae9; font-size:28px; animation:ep02-in .18s 2.9s backwards; }
+#ep02 .ai-aside b { margin-right:8px; color:#c2ade8; font-size:21px; }
+@keyframes ep02-in { from { opacity:0; } to { opacity:1; } }
+@keyframes ep02-click { 50% { transform:scale(.97); } to { opacity:0; } }
+@keyframes ep02-highlight { from { border-color:#efb48b; background:#40352e; } }
+@keyframes ep02-zoom { from { transform:scale(.68); opacity:.6; } }
+@media (prefers-reduced-motion:reduce) {
+  #ep02 * { animation:none !important; }
+  #ep02[data-scene="4"] .merge-action { visibility:hidden; }
+}
